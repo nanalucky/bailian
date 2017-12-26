@@ -16,5 +16,11 @@ namespace bailian
         {
             InitializeComponent();
         }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Http.login();
+        }
+
     }
 }

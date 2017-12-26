@@ -8,7 +8,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using System.IO;
 
-namespace huawei
+namespace bailian
 {
     class Http
     {
