@@ -11,6 +11,8 @@ using Newtonsoft.Json.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Drawing;
+using System.Runtime.InteropServices;
+using System.Drawing.Imaging;
 
 
 namespace bailian
@@ -76,10 +78,12 @@ namespace bailian
         public static bool bSetProxy = false;
         public static string strURL = @"";
         public static DateTime dtStartTime;
-        public static List<Player> listPlayer = new List<Player>(); 
+        public static List<Player> listPlayer = new List<Player>();
 
         public static void Init()
         {
+            Http.InitCnn();
+            
             string szConfigFileName = System.Environment.CurrentDirectory + @"\" + @"config.txt";
             string szAccountFileName = System.Environment.CurrentDirectory + @"\" + @"account.txt";
 
@@ -117,12 +121,76 @@ namespace bailian
             string strBase64 = File.ReadAllText(System.Environment.CurrentDirectory + @"\" + @"base64.txt");
             Http.Base64StringToImage(System.Environment.CurrentDirectory + @"\" + @"pic", strBase64);
         }
+
+        public static void ReadSecurityImage()
+        {
+            string strRet = Http.Cnn(System.Environment.CurrentDirectory + @"\" + @"pic.bmp");
+            Console.WriteLine(@"CNN:" + strRet);
+        }
     };
     
     
     
     class Http
     {
+        [DllImport("OCR.dll")]
+        public static extern StringBuilder CNN_OCR(int index, byte[] FileBuffer, int imglen, int zxd);
+        [DllImport("OCR.dll")]
+        public static extern int LCNN_INIT(string path, string ps, int threads);
+
+        public static bool bInitCnn = false;
+
+        public static void InitCnn()
+        {
+            if (!bInitCnn)
+            {
+                bInitCnn = true;
+                LCNN_INIT(System.Environment.CurrentDirectory + @"\" + "字母数字.cnn", "", 100);
+            }             
+        }
+
+        public static byte[] ImageToBytes(Image image)
+        {
+            ImageFormat format = image.RawFormat;
+            using (MemoryStream ms = new MemoryStream())
+            {
+                if (format.Equals(ImageFormat.Jpeg))
+                {
+                    image.Save(ms, ImageFormat.Jpeg);
+                }
+                else if (format.Equals(ImageFormat.Png))
+                {
+                    image.Save(ms, ImageFormat.Png);
+                }
+                else if (format.Equals(ImageFormat.Bmp))
+                {
+                    image.Save(ms, ImageFormat.Bmp);
+                }
+                else if (format.Equals(ImageFormat.Gif))
+                {
+                    image.Save(ms, ImageFormat.Gif);
+                }
+                else if (format.Equals(ImageFormat.Icon))
+                {
+                    image.Save(ms, ImageFormat.Icon);
+                }
+                byte[] buffer = new byte[ms.Length];
+                //Image.Save()会改变MemoryStream的Position，需要重新Seek到Begin
+                ms.Seek(0, SeekOrigin.Begin);
+                ms.Read(buffer, 0, buffer.Length);
+                return buffer;
+            }
+        }
+
+        public static string Cnn(string imgPath)
+        {
+            Image img1 = Image.FromFile(imgPath);
+            byte[] img = ImageToBytes(img1);
+            StringBuilder sb = CNN_OCR(1, img, img.Length, 0);
+            return sb.ToString();
+        }
+      
+        
         public static bool CheckValidationResult(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors)
         {
             return true; //总是接受  

@@ -19,9 +19,10 @@ namespace bailian
 
         private void button1_Click(object sender, EventArgs e)
         {
-            //AllPlayers.Init();
+            AllPlayers.Init();
             //AllPlayers.Run();
-            AllPlayers.Base64ToJPG();
+            //AllPlayers.Base64ToJPG();
+            AllPlayers.ReadSecurityImage();
         }
 
     }
