@@ -36,9 +36,6 @@ namespace bailian
             request.CookieContainer = loginCookieContainer;
             WebResponse response = request.GetResponse();
             Console.WriteLine(string.Format("1:{0}\n", loginCookieContainer.ToString()));
-            //string cookieString = response.Headers["Set-Cookie"];
-            //Console.WriteLine(string.Format("2:{0}", cookieString));
-
 
             ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
             request = WebRequest.Create(string.Format(@"https://m.bl.com/h5-web/member/login.html?cacheFlag={0}", Http.Timestamp())) as HttpWebRequest;
@@ -68,8 +65,6 @@ namespace bailian
                 stream.Write(data, 0, data.Length);
             }
             response = request.GetResponse();
-            //cookieString = response.Headers["Set-Cookie"];
-            //Console.WriteLine(string.Format("2:{0}", cookieString));
             
         }
     };
