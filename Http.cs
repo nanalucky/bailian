@@ -13,6 +13,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Drawing.Imaging;
+using System.Threading;
 
 
 namespace bailian
@@ -21,55 +22,84 @@ namespace bailian
     {
         public string strAccount = @"";
         public string strPassword = @"";
+        public Thread thread;
 
-        public void Login()
+        public void Run()
         {
-            HttpWebRequest request = null;
-            CookieContainer loginCookieContainer = new CookieContainer();
-
-            ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
-            request = WebRequest.Create(AllPlayers.strURL) as HttpWebRequest;
-            request.ProtocolVersion = HttpVersion.Version11;
-            request.Method = "GET";
-            request.Accept = "text/html, application/xhtml+xml, image/jxr, */*";
-            WebHeaderCollection headers = request.Headers;
-            headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
-            request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
-            headers.Add("Accept-Encoding", "gzip, deflate");
-            request.CookieContainer = loginCookieContainer;
-            WebResponse response = request.GetResponse();
-            Console.WriteLine(string.Format("1:{0}\n", loginCookieContainer.ToString()));
-
-            ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
-            request = WebRequest.Create(string.Format(@"https://m.bl.com/h5-web/member/login.html?cacheFlag={0}", Http.Timestamp())) as HttpWebRequest;
-            request.ProtocolVersion = HttpVersion.Version11;
-            request.Method = "POST";
-            headers = request.Headers;
-            //headers.Add("Origin", "https://m.bl.com");
-            //request.Referer = "https://m.bl.com/h5-web/member/view_login.html?redirctUrl=https%3A%2F%2Fm.bl.com%2Fh5-web%2Fseckill%2Fview_Login_Seckill.html%3FseckillFlag%3D1%26actTime%3DMS_2016122811150%26skuID%3D4271";
-            headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
-            request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
-            request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
-            request.Accept = "*/*";
-            headers.Add("X-Requested-With", "XMLHttpRequest");
-            headers.Add("Accept-Encoding", "gzip, deflate, br");
-            headers.Add("Cache-Control", "no-cache");
-            request.CookieContainer = loginCookieContainer;
-            StringBuilder buffer = new StringBuilder();
-            buffer.AppendFormat("{0}={1}", "loginName", strAccount);
-            buffer.AppendFormat("&{0}={1}", "password", Http.UserMd5(strPassword));
-            buffer.AppendFormat("&{0}={1}", "type", "1");
-            buffer.AppendFormat("&{0}={1}", "relocationRUL", Uri.EscapeDataString("https://m.bl.com/h5-web/seckill/view_Login_Seckill.html?seckillFlag=1&actTime=MS_2016122811150&skuID=4271"));
-            buffer.AppendFormat("&{0}={1}", "mpFlag", "");
-            Encoding requestEncoding = Encoding.GetEncoding("utf-8");
-            Byte[] data = requestEncoding.GetBytes(buffer.ToString());
-            using (Stream stream = request.GetRequestStream())
+            int nLoginTimes = 1;
+            while(true)
             {
-                stream.Write(data, 0, data.Length);
+                Program.form1.UpdateDataGridView(strAccount, Column.Login, string.Format("开始登录:{0}", nLoginTimes));
+                HttpWebRequest request = null;
+                CookieContainer loginCookieContainer = new CookieContainer();
+
+                ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
+                request = WebRequest.Create(AllPlayers.strURL) as HttpWebRequest;
+                request.ProtocolVersion = HttpVersion.Version11;
+                request.Method = "GET";
+                request.Accept = "text/html, application/xhtml+xml, image/jxr, */*";
+                WebHeaderCollection headers = request.Headers;
+                headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
+                request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
+                headers.Add("Accept-Encoding", "gzip, deflate");
+                request.CookieContainer = loginCookieContainer;
+                WebResponse response = request.GetResponse();
+                //Console.WriteLine(string.Format("1:{0}\n", loginCookieContainer.ToString()));
+
+                ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
+                request = WebRequest.Create(string.Format(@"https://m.bl.com/h5-web/member/login.html?cacheFlag={0}", Http.Timestamp())) as HttpWebRequest;
+                request.ProtocolVersion = HttpVersion.Version11;
+                request.Method = "POST";
+                headers = request.Headers;
+                //headers.Add("Origin", "https://m.bl.com");
+                //request.Referer = "https://m.bl.com/h5-web/member/view_login.html?redirctUrl=https%3A%2F%2Fm.bl.com%2Fh5-web%2Fseckill%2Fview_Login_Seckill.html%3FseckillFlag%3D1%26actTime%3DMS_2016122811150%26skuID%3D4271";
+                headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
+                request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
+                request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
+                request.Accept = "*/*";
+                headers.Add("X-Requested-With", "XMLHttpRequest");
+                headers.Add("Accept-Encoding", "gzip, deflate, br");
+                headers.Add("Cache-Control", "no-cache");
+                request.CookieContainer = loginCookieContainer;
+                StringBuilder buffer = new StringBuilder();
+                buffer.AppendFormat("{0}={1}", "loginName", strAccount);
+                buffer.AppendFormat("&{0}={1}", "password", Http.UserMd5(strPassword));
+                buffer.AppendFormat("&{0}={1}", "type", "1");
+                buffer.AppendFormat("&{0}={1}", "relocationRUL", Uri.EscapeDataString("https://m.bl.com/h5-web/seckill/view_Login_Seckill.html?seckillFlag=1&actTime=MS_2016122811150&skuID=4271"));
+                buffer.AppendFormat("&{0}={1}", "mpFlag", "");
+                Encoding requestEncoding = Encoding.GetEncoding("utf-8");
+                Byte[] data = requestEncoding.GetBytes(buffer.ToString());
+                using (Stream stream = request.GetRequestStream())
+                {
+                    stream.Write(data, 0, data.Length);
+                }
+                response = request.GetResponse();
+                System.IO.StreamReader reader = new System.IO.StreamReader(response.GetResponseStream(), requestEncoding);
+                string body = reader.ReadToEnd();
+                if (body.IndexOf("success") >= 0)
+                {
+                    JObject joBody = (JObject)JsonConvert.DeserializeObject(body);
+                    if (string.Compare((string)joBody["success"], "true", true) == 0)
+                    {
+                        Program.form1.UpdateDataGridView(strAccount, Column.Login, "成功");
+                        break;
+                    }
+                }
+
+                nLoginTimes++;
+                if(nLoginTimes > 10)
+                {
+                    Program.form1.UpdateDataGridView(strAccount, Column.Login, "放弃");
+                    break;
+                }
             }
-            response = request.GetResponse();
-            
+            if (nLoginTimes > 10)
+                return;
+        
+    
+
         }
+
 
     };
 
@@ -95,8 +125,7 @@ namespace bailian
                 bSetProxy = false;
             else
                 bSetProxy = true;
-            //Program.form1.Form1_Init();
-
+            Program.form1.Form1_Init();
 
             listPlayer = new List<Player>();
             string[] arrayText = File.ReadAllLines(szAccountFileName);
@@ -106,14 +135,27 @@ namespace bailian
                 Player player = new Player();
                 player.strAccount = arrayParam[0];
                 player.strPassword = arrayParam[1];
+                player.thread = new Thread(new ThreadStart(player.Run));
                 listPlayer.Add(player);
+                Program.form1.dataGridViewInfo_AddRow(arrayParam[0]);
             }
         }
 
 
         public static void Run()
         {
-            listPlayer[0].Login();
+            foreach (Player player in listPlayer)
+            {
+                player.thread.Start();
+            }
+
+            foreach (Player player in listPlayer)
+            {
+                player.thread.Join();
+            }
+
+            Program.form1.richTextBoxStatus_AddString("任务完成!\n");
+            Program.form1.button1_Enabled();
         }
 
         public static void Base64ToJPG()
