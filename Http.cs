@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Drawing;
 
 
 namespace bailian
@@ -67,6 +68,7 @@ namespace bailian
             response = request.GetResponse();
             
         }
+
     };
 
     class AllPlayers
@@ -109,6 +111,12 @@ namespace bailian
         {
             listPlayer[0].Login();
         }
+
+        public static void Base64ToJPG()
+        {
+            string strBase64 = File.ReadAllText(System.Environment.CurrentDirectory + @"\" + @"base64.txt");
+            Http.Base64StringToImage(System.Environment.CurrentDirectory + @"\" + @"pic", strBase64);
+        }
     };
     
     
@@ -140,6 +148,32 @@ namespace bailian
                 pwd = pwd + s[i].ToString("x2");
             }
             return pwd;
+        }
+
+
+        /// base64编码的文本转为图片
+        /// </summary>
+        /// <param name="txtFileName">保存的路径加文件名</param>
+        /// <param name="inputStr">要转换的文本</param>
+        public static void Base64StringToImage(string txtFileName, string inputStr)
+        {
+            try
+            {
+                //  String inputStr = sr.ReadToEnd();
+                byte[] arr = Convert.FromBase64String(inputStr);
+                MemoryStream ms = new MemoryStream(arr);
+                Bitmap bmp = new Bitmap(ms);
+
+                //bmp.Save(txtFileName + ".jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+                bmp.Save(txtFileName + ".bmp", System.Drawing.Imaging.ImageFormat.Bmp);
+                //bmp.Save(txtFileName + ".gif", ImageFormat.Gif);
+                //bmp.Save(txtFileName + ".png", ImageFormat.Png);
+                ms.Close();
+            }
+            catch (Exception ex)
+            {
+
+            }
         }
 
         
