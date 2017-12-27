@@ -15,10 +15,9 @@ namespace bailian
     {
         Telephone = 0,
         Login,
-        SignIn,
-        Post,
-        MyNote,
-        DelForum
+        Detail,
+        GetCode,
+        SendCoupon
     };
     
     
