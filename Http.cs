@@ -19,11 +19,50 @@ using System.IO.Compression;
 
 namespace bailian
 {
+    public class RequestState
+    {
+        // This class stores the State of the request.
+        const int BUFFER_SIZE = 1024;
+        public StringBuilder requestData;
+        public byte[] BufferRead;
+        public HttpWebRequest request;
+        public HttpWebResponse response;
+        public WebHeaderCollection headers;
+        public Stream streamResponse;
+        public CookieContainer cookieContainer;
+        public Encoding requestEncoding;
+        public string body;
+
+        
+        public RequestState()
+        {
+            BufferRead = new byte[BUFFER_SIZE];
+            requestData = new StringBuilder("");
+            request = null;
+            streamResponse = null;
+            headers = null;
+            cookieContainer = new CookieContainer();
+            requestEncoding = Encoding.GetEncoding("utf-8");
+            body = @"";
+        }
+    }
+
+
+    
     class Player
     {
         public string strAccount = @"";
         public string strPassword = @"";
         public Thread thread;
+        string uuId = @"";
+        string skuID = @"";
+        string activityCode = @"";
+        int nCouponTimes;
+        bool bLoginSuccess = false;
+        bool bCouponSuccess = false;
+
+        RequestState requestState;
+        ManualResetEvent allDone;
 
         private string GetBody(HttpWebResponse response)
         {
@@ -43,203 +82,331 @@ namespace bailian
             return body; 
         }
 
-        public void Run()
+        private string GetBody(RequestState _requestState)
         {
-            CookieContainer loginCookieContainer = new CookieContainer();
-            HttpWebRequest request = null;
-            HttpWebResponse response = null;
-            WebHeaderCollection headers = null;
-            Encoding requestEncoding = Encoding.GetEncoding("utf-8");
-            string body = @"";
-
-            int nLoginTimes = 1;
-            while(true)
+            System.IO.StreamReader reader = null;
+            if (_requestState.response.ContentEncoding.ToLower().Contains("gzip"))
             {
-                Program.form1.UpdateDataGridView(strAccount, Column.Login, string.Format("开始登录:{0}", nLoginTimes));
+                reader = new System.IO.StreamReader(new GZipStream(_requestState.response.GetResponseStream(), CompressionMode.Decompress), _requestState.requestEncoding);
+            }
+            else
+            {
+                reader = new System.IO.StreamReader(_requestState.response.GetResponseStream(), _requestState.requestEncoding);
+            }
+            _requestState.body = reader.ReadToEnd();
+            return _requestState.body;
+        }
+
+
+        private void RespFirstCallback(IAsyncResult asynchronousResult)
+        {
+            try
+            {
+                // State of request is asynchronous.
+                RequestState myRequestState = (RequestState)asynchronousResult.AsyncState;
+                HttpWebRequest myHttpWebRequest = myRequestState.request;
+                myRequestState.response = (HttpWebResponse)myHttpWebRequest.EndGetResponse(asynchronousResult);
+
 
                 ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
-                request = WebRequest.Create(AllPlayers.strURL) as HttpWebRequest;
-                request.ProtocolVersion = HttpVersion.Version11;
-                request.Method = "GET";
-                request.Accept = "text/html, application/xhtml+xml, image/jxr, */*";
-                headers = request.Headers;
-                headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
-                request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
-                headers.Add("Accept-Encoding", "gzip, deflate");
-                request.CookieContainer = loginCookieContainer;
-                response = (HttpWebResponse)request.GetResponse();
-                //Console.WriteLine(string.Format("1:{0}\n", loginCookieContainer.ToString()));
-
-                ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
-                request = WebRequest.Create(string.Format(@"https://m.bl.com/h5-web/member/login.html?cacheFlag={0}", Http.Timestamp())) as HttpWebRequest;
-                request.ProtocolVersion = HttpVersion.Version11;
-                request.Method = "POST";
-                headers = request.Headers;
-                headers.Add("Origin", "https://m.bl.com");
-                request.Referer = "https://m.bl.com/h5-web/member/view_login.html?redirctUrl=https%3A%2F%2Fm.bl.com%2Fh5-web%2Fseckill%2Fview_Login_Seckill.html%3FseckillFlag%3D1%26actTime%3DMS_2016122811150%26skuID%3D4271";
-                headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
-                request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
-                request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
-                request.Accept = "*/*";
-                headers.Add("X-Requested-With", "XMLHttpRequest");
-                headers.Add("Accept-Encoding", "gzip, deflate, br");
-                headers.Add("Cache-Control", "no-cache");
-                request.CookieContainer = loginCookieContainer;
+                myRequestState.request = WebRequest.Create(string.Format(@"https://m.bl.com/h5-web/member/login.html?cacheFlag={0}", Http.Timestamp())) as HttpWebRequest;
+                myRequestState.request.ProtocolVersion = HttpVersion.Version11;
+                myRequestState.request.Method = "POST";
+                myRequestState.headers = myRequestState.request.Headers;
+                myRequestState.headers.Add("Origin", "https://m.bl.com");
+                myRequestState.request.Referer = "https://m.bl.com/h5-web/member/view_login.html?redirctUrl=https%3A%2F%2Fm.bl.com%2Fh5-web%2Fseckill%2Fview_Login_Seckill.html%3FseckillFlag%3D1%26actTime%3DMS_2016122811150%26skuID%3D4271";
+                myRequestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
+                myRequestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
+                myRequestState.request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
+                myRequestState.request.Accept = "*/*";
+                myRequestState.headers.Add("X-Requested-With", "XMLHttpRequest");
+                myRequestState.headers.Add("Accept-Encoding", "gzip, deflate, br");
+                myRequestState.headers.Add("Cache-Control", "no-cache");
+                myRequestState.request.CookieContainer = myRequestState.cookieContainer;
                 StringBuilder buffer = new StringBuilder();
                 buffer.AppendFormat("{0}={1}", "loginName", strAccount);
                 buffer.AppendFormat("&{0}={1}", "password", Http.UserMd5(strPassword));
                 buffer.AppendFormat("&{0}={1}", "type", "1");
                 buffer.AppendFormat("&{0}={1}", "relocationRUL", Uri.EscapeDataString("https://m.bl.com/h5-web/seckill/view_Login_Seckill.html?seckillFlag=1&actTime=MS_2016122811150&skuID=4271"));
                 buffer.AppendFormat("&{0}={1}", "mpFlag", "");
-                Byte[] data = requestEncoding.GetBytes(buffer.ToString());
-                using (Stream stream = request.GetRequestStream())
+                Byte[] data = myRequestState.requestEncoding.GetBytes(buffer.ToString());
+                using (Stream stream = myRequestState.request.GetRequestStream())
                 {
                     stream.Write(data, 0, data.Length);
                 }
-                response = (HttpWebResponse)request.GetResponse();
-                body = GetBody(response);
-                if (body.IndexOf("success") >= 0)
+                IAsyncResult result = (IAsyncResult)myRequestState.request.BeginGetResponse(new AsyncCallback(RespLoginCallback), myRequestState);
+                return;
+            }
+            catch (WebException e)
+            {
+                Console.WriteLine("\nRespCallback Exception raised!");
+                Console.WriteLine("\nMessage:{0}", e.Message);
+                Console.WriteLine("\nStatus:{0}", e.Status);
+                allDone.Set();
+            }
+        }
+
+        private void RespLoginCallback(IAsyncResult asynchronousResult)
+        {
+            try
+            {
+                // State of request is asynchronous.
+                RequestState myRequestState = (RequestState)asynchronousResult.AsyncState;
+                HttpWebRequest myHttpWebRequest = myRequestState.request;
+                myRequestState.response = (HttpWebResponse)myHttpWebRequest.EndGetResponse(asynchronousResult);
+
+                GetBody(myRequestState);
+                if (myRequestState.body.IndexOf("success") >= 0)
                 {
-                    JObject joBody = (JObject)JsonConvert.DeserializeObject(body);
+                    JObject joBody = (JObject)JsonConvert.DeserializeObject(myRequestState.body);
                     if (string.Compare((string)joBody["success"], "true", true) == 0)
                     {
                         Program.form1.UpdateDataGridView(strAccount, Column.Login, "成功");
-                        break;
+                        bLoginSuccess = true;
                     }
                 }
 
-                nLoginTimes++;
-                if(nLoginTimes > 10)
-                {
-                    Program.form1.UpdateDataGridView(strAccount, Column.Login, "放弃");
-                    break;
-                }
-            }
-            if (nLoginTimes > 10)
+                allDone.Set();
                 return;
-        
-            int nCouponTimes = 1;
-            while ((DateTime.Now <= AllPlayers.dtEndTime))
+            }
+            catch (WebException e)
             {
-                // 验证码
-                Program.form1.UpdateDataGridView(strAccount, Column.Detail, string.Format("第{0}次", nCouponTimes));
-                ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
-                request = WebRequest.Create(@"http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=7970") as HttpWebRequest;
-                request.ProtocolVersion = HttpVersion.Version11;
-                request.Method = "GET";
-                request.Accept = "text/html, application/xhtml+xml, image/jxr, */*";
-                headers = request.Headers;
-                headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
-                request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
-                headers.Add("Accept-Encoding", "gzip, deflate");
-                request.CookieContainer = loginCookieContainer;
-                response = (HttpWebResponse)request.GetResponse();
-                body = GetBody(response);
-                if (body.Length > 0 && body.IndexOf("uuId") > 0)
+                Console.WriteLine("\nRespCallback Exception raised!");
+                Console.WriteLine("\nMessage:{0}", e.Message);
+                Console.WriteLine("\nStatus:{0}", e.Status);
+                allDone.Set();
+            }
+        }
+
+
+        private void RespDetailCallback(IAsyncResult asynchronousResult)
+        {
+            try
+            {
+                // State of request is asynchronous.
+                RequestState myRequestState = (RequestState)asynchronousResult.AsyncState;
+                HttpWebRequest myHttpWebRequest = myRequestState.request;
+                myRequestState.response = (HttpWebResponse)myHttpWebRequest.EndGetResponse(asynchronousResult);
+
+                GetBody(myRequestState);
+                if (myRequestState.body.Length > 0 && myRequestState.body.IndexOf("uuId") > 0)
                 {
-                    string uuId = @"";
-                    int nuuIdIndex = body.IndexOf("uuId");
-                    int nuuIdValueIndex1 = body.IndexOf("=\"", nuuIdIndex) + 2;
-                    int nuuIdValueIndex2 = body.IndexOf("\"", nuuIdValueIndex1);
-                    uuId = body.Substring(nuuIdValueIndex1, nuuIdValueIndex2 - nuuIdValueIndex1);
+                    uuId = @"";
+                    int nuuIdIndex = myRequestState.body.IndexOf("uuId");
+                    int nuuIdValueIndex1 = myRequestState.body.IndexOf("=\"", nuuIdIndex) + 2;
+                    int nuuIdValueIndex2 = myRequestState.body.IndexOf("\"", nuuIdValueIndex1);
+                    uuId = myRequestState.body.Substring(nuuIdValueIndex1, nuuIdValueIndex2 - nuuIdValueIndex1);
 
-                    string activityCode = @"";
-                    int nactivityCodeIndex = body.IndexOf("activityCode");
-                    int nactivityCodeValueIndex1 = body.IndexOf("=\"", nactivityCodeIndex) + 2;
-                    int nactivityCodeValueIndex2 = body.IndexOf("\"", nactivityCodeValueIndex1);
-                    activityCode = body.Substring(nactivityCodeValueIndex1, nactivityCodeValueIndex2 - nactivityCodeValueIndex1);
+                    activityCode = @"";
+                    int nactivityCodeIndex = myRequestState.body.IndexOf("activityCode");
+                    int nactivityCodeValueIndex1 = myRequestState.body.IndexOf("=\"", nactivityCodeIndex) + 2;
+                    int nactivityCodeValueIndex2 = myRequestState.body.IndexOf("\"", nactivityCodeValueIndex1);
+                    activityCode = myRequestState.body.Substring(nactivityCodeValueIndex1, nactivityCodeValueIndex2 - nactivityCodeValueIndex1);
 
-                    string skuID = @"";
-                    int nskuIDIndex = body.IndexOf("skuID");
-                    int nskuIDValueIndex1 = body.IndexOf("=\"", nskuIDIndex) + 2;
-                    int nskuIDValueIndex2 = body.IndexOf("\"", nskuIDValueIndex1);
-                    skuID = body.Substring(nskuIDValueIndex1, nskuIDValueIndex2 - nskuIDValueIndex1);
+                    skuID = @"";
+                    int nskuIDIndex = myRequestState.body.IndexOf("skuID");
+                    int nskuIDValueIndex1 = myRequestState.body.IndexOf("=\"", nskuIDIndex) + 2;
+                    int nskuIDValueIndex2 = myRequestState.body.IndexOf("\"", nskuIDValueIndex1);
+                    skuID = myRequestState.body.Substring(nskuIDValueIndex1, nskuIDValueIndex2 - nskuIDValueIndex1);
                     Program.form1.UpdateDataGridView(strAccount, Column.Detail, "成功");
 
                     Program.form1.UpdateDataGridView(strAccount, Column.GetCode, string.Format("第{0}次", nCouponTimes));
                     ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
-                    request = WebRequest.Create(@"http://killcoupon.bl.com/seckill-web/seckillDetail/getCode.html") as HttpWebRequest;
-                    request.ProtocolVersion = HttpVersion.Version11;
-                    request.Method = "POST";
-                    headers.Add("Origin", "http://killcoupon.bl.com");
-                    request.Referer = "http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=7970";
-                    headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
-                    request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
-                    request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
-                    request.Accept = "application/json";
-                    headers.Add("X-Requested-With", "XMLHttpRequest");
-                    headers.Add("Accept-Encoding", "gzip, deflate");
-                    headers.Add("Pragma", "no-cache");
-                    request.CookieContainer = loginCookieContainer;
-                    response = (HttpWebResponse)request.GetResponse();
-                    body = GetBody(response);
-                    if (body.Length > 0 && body.IndexOf("success") >= 0)
-                    {
-                        JObject joBody = (JObject)JsonConvert.DeserializeObject(body);
-                        if (string.Compare((string)joBody["success"], "true", true) == 0)
-                        {
-                            string strBase64 = @"";
-                            JToken outResCode;
-                            if (joBody.TryGetValue("resCode", out outResCode) && outResCode.Type != JTokenType.Null)
-                            {
-                                strBase64 = (string)joBody["resCode"];
-                            }
-                            else
-                            {
-                                //strBase64 = File.ReadAllText(System.Environment.CurrentDirectory + "\\base64.txt");
-                            }
-                            string strCoupon = Http.CnnFromImageBase64(strBase64);
-
-                            Program.form1.UpdateDataGridView(strAccount, Column.GetCode, "成功");
-                            Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, string.Format("第{0}次", nCouponTimes));
-                            ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
-                            request = WebRequest.Create(@"http://killcoupon.bl.com/seckill-web/seckillDetail/sendCoupon.html") as HttpWebRequest;
-                            request.ProtocolVersion = HttpVersion.Version11;
-                            request.Method = "POST";
-                            headers.Add("Origin", "http://killcoupon.bl.com");
-                            request.Referer = "http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=7970";
-                            headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
-                            request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
-                            request.ContentType = "application/x-www-form-urlencoded";
-                            request.Accept = "application/json";
-                            headers.Add("X-Requested-With", "XMLHttpRequest");
-                            headers.Add("Accept-Encoding", "gzip, deflate");
-                            headers.Add("Pragma", "no-cache");
-                            request.CookieContainer = loginCookieContainer;
-                            StringBuilder buffer = new StringBuilder();
-                            buffer.AppendFormat("{0}={1}", "activityCode", activityCode);
-                            buffer.AppendFormat("&{0}={1}", "code", Uri.EscapeDataString(strCoupon));
-                            buffer.AppendFormat("&{0}={1}", "skuID", skuID);
-                            buffer.AppendFormat("&{0}={1}", "uuID", uuId);
-                            Byte[] data = requestEncoding.GetBytes(buffer.ToString());
-                            using (Stream stream = request.GetRequestStream())
-                            {
-                                stream.Write(data, 0, data.Length);
-                            }
-                            response = (HttpWebResponse)request.GetResponse();
-                            body = GetBody(response);
-                            if (body.Length > 0 && body.IndexOf("success") > 0)
-                            {
-                                joBody = (JObject)JsonConvert.DeserializeObject(body);
-                                if (string.Compare((string)joBody["success"], "true", true) == 0)
-                                {
-                                    Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, "成功");
-                                    break;
-                                }
-                                Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, "失败");
-                            }
-                        }
-                
-                    }
+                    myRequestState.request = WebRequest.Create(@"http://killcoupon.bl.com/seckill-web/seckillDetail/getCode.html") as HttpWebRequest;
+                    myRequestState.request.ProtocolVersion = HttpVersion.Version11;
+                    myRequestState.request.Method = "POST";
+                    myRequestState.headers = myRequestState.request.Headers;
+                    myRequestState.headers.Add("Origin", "http://killcoupon.bl.com");
+                    myRequestState.request.Referer = "http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=7970";
+                    myRequestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
+                    myRequestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
+                    myRequestState.request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
+                    myRequestState.request.Accept = "application/json";
+                    myRequestState.headers.Add("X-Requested-With", "XMLHttpRequest");
+                    myRequestState.headers.Add("Accept-Encoding", "gzip, deflate");
+                    myRequestState.headers.Add("Pragma", "no-cache");
+                    myRequestState.request.CookieContainer = myRequestState.cookieContainer;
+                    IAsyncResult result = (IAsyncResult)myRequestState.request.BeginGetResponse(new AsyncCallback(RespGetCodeCallback), myRequestState);
                 }
-
-                nCouponTimes++;
-                Thread.Sleep(1);
+                return;
             }
-
+            catch (WebException e)
+            {
+                Console.WriteLine("\nRespCallback Exception raised!");
+                Console.WriteLine("\nMessage:{0}", e.Message);
+                Console.WriteLine("\nStatus:{0}", e.Status);
+                allDone.Set();
+            }
         }
 
 
+        private void RespGetCodeCallback(IAsyncResult asynchronousResult)
+        {
+            try
+            {
+                // State of request is asynchronous.
+                RequestState myRequestState = (RequestState)asynchronousResult.AsyncState;
+                HttpWebRequest myHttpWebRequest = myRequestState.request;
+                myRequestState.response = (HttpWebResponse)myHttpWebRequest.EndGetResponse(asynchronousResult);
+
+                GetBody(myRequestState);
+                if (myRequestState.body.Length > 0 && myRequestState.body.IndexOf("success") >= 0)
+                {
+                    JObject joBody = (JObject)JsonConvert.DeserializeObject(myRequestState.body);
+                    if (string.Compare((string)joBody["success"], "true", true) == 0)
+                    {
+                        string strBase64 = @"";
+                        JToken outobj;
+                        if (joBody.TryGetValue("obj", out outobj) && outobj.Type != JTokenType.Null)
+                        {
+                            strBase64 = (string)joBody["obj"];
+                        }
+                        else
+                        {
+                            //strBase64 = File.ReadAllText(System.Environment.CurrentDirectory + "\\base64.txt");
+                        }
+                        string strCoupon = Http.CnnFromImageBase64(strBase64);
+
+                        Program.form1.UpdateDataGridView(strAccount, Column.GetCode, "成功");
+                        Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, string.Format("第{0}次", nCouponTimes));
+                        ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
+                        myRequestState.request = WebRequest.Create(@"http://killcoupon.bl.com/seckill-web/seckillDetail/sendCoupon.html") as HttpWebRequest;
+                        myRequestState.request.ProtocolVersion = HttpVersion.Version11;
+                        myRequestState.request.Method = "POST";
+                        myRequestState.headers = myRequestState.request.Headers;
+                        myRequestState.headers.Add("Origin", "http://killcoupon.bl.com");
+                        myRequestState.request.Referer = "http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=7970";
+                        myRequestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
+                        myRequestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
+                        myRequestState.request.ContentType = "application/x-www-form-urlencoded";
+                        myRequestState.request.Accept = "application/json";
+                        myRequestState.headers.Add("X-Requested-With", "XMLHttpRequest");
+                        myRequestState.headers.Add("Accept-Encoding", "gzip, deflate");
+                        myRequestState.headers.Add("Pragma", "no-cache");
+                        myRequestState.request.CookieContainer = myRequestState.cookieContainer;
+                        StringBuilder buffer = new StringBuilder();
+                        buffer.AppendFormat("{0}={1}", "activityCode", activityCode);
+                        buffer.AppendFormat("&{0}={1}", "code", Uri.EscapeDataString(strCoupon));
+                        buffer.AppendFormat("&{0}={1}", "skuID", skuID);
+                        buffer.AppendFormat("&{0}={1}", "uuID", uuId);
+                        Byte[] data = myRequestState.requestEncoding.GetBytes(buffer.ToString());
+                        using (Stream stream = myRequestState.request.GetRequestStream())
+                        {
+                            stream.Write(data, 0, data.Length);
+                        }
+                        IAsyncResult result = (IAsyncResult)myRequestState.request.BeginGetResponse(new AsyncCallback(RespGetCodeCallback), myRequestState);
+                    }
+                }
+
+                return;
+            }
+            catch (WebException e)
+            {
+                Console.WriteLine("\nRespCallback Exception raised!");
+                Console.WriteLine("\nMessage:{0}", e.Message);
+                Console.WriteLine("\nStatus:{0}", e.Status);
+                allDone.Set();
+            }
+        }
+
+        private void RespSendCouponCallback(IAsyncResult asynchronousResult)
+        {
+            try
+            {
+                // State of request is asynchronous.
+                RequestState myRequestState = (RequestState)asynchronousResult.AsyncState;
+                HttpWebRequest myHttpWebRequest = myRequestState.request;
+                myRequestState.response = (HttpWebResponse)myHttpWebRequest.EndGetResponse(asynchronousResult);
+
+                GetBody(myRequestState);
+                if (myRequestState.body.Length > 0 && myRequestState.body.IndexOf("success") > 0)
+                {
+                    JObject joBody = (JObject)JsonConvert.DeserializeObject(myRequestState.body);
+                    if (string.Compare((string)joBody["success"], "true", true) == 0)
+                    {
+                        Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, "成功");
+                        bCouponSuccess = true;
+                        allDone.Set();
+                    }
+                    Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, "失败");
+                }
+
+                return;
+            }
+            catch (WebException e)
+            {
+                Console.WriteLine("\nRespCallback Exception raised!");
+                Console.WriteLine("\nMessage:{0}", e.Message);
+                Console.WriteLine("\nStatus:{0}", e.Status);
+                allDone.Set();
+            }
+        }
+
+        public void Run()
+        {
+            allDone = new ManualResetEvent(false);
+            uuId = @"";
+            skuID = @"";
+            activityCode = @"";
+            nCouponTimes = 1;
+            bLoginSuccess = false;
+            bCouponSuccess = false;
+            requestState = new RequestState();
+
+            int nLoginTimes = 1;
+            while(true)
+            {
+                allDone.Reset();
+
+                Program.form1.UpdateDataGridView(strAccount, Column.Login, string.Format("开始登录:{0}", nLoginTimes));
+
+                ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
+                requestState.request = WebRequest.Create(AllPlayers.strURL) as HttpWebRequest;
+                requestState.request.ProtocolVersion = HttpVersion.Version11;
+                requestState.request.Method = "GET";
+                requestState.request.Accept = "text/html, application/xhtml+xml, image/jxr, */*";
+                requestState.headers = requestState.request.Headers;
+                requestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
+                requestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
+                requestState.headers.Add("Accept-Encoding", "gzip, deflate");
+                requestState.request.CookieContainer = requestState.cookieContainer;
+                IAsyncResult result = (IAsyncResult)requestState.request.BeginGetResponse(new AsyncCallback(RespGetCodeCallback), requestState);
+                
+                allDone.WaitOne();
+                if (bLoginSuccess)
+                {
+                    break;
+                }
+                nLoginTimes++;
+           }
+        
+            while ((DateTime.Now <= AllPlayers.dtEndTime))
+            {
+                allDone.Reset();
+                
+                // 验证码
+                Program.form1.UpdateDataGridView(strAccount, Column.Detail, string.Format("第{0}次", nCouponTimes));
+                ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
+                requestState.request = WebRequest.Create(@"http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=7970") as HttpWebRequest;
+                requestState.request.ProtocolVersion = HttpVersion.Version11;
+                requestState.request.Method = "GET";
+                requestState.request.Accept = "text/html, application/xhtml+xml, image/jxr, */*";
+                requestState.headers = requestState.request.Headers;
+                requestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
+                requestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
+                requestState.headers.Add("Accept-Encoding", "gzip, deflate");
+                requestState.request.CookieContainer = requestState.cookieContainer;
+                requestState.request.BeginGetResponse(new AsyncCallback(RespDetailCallback), requestState);
+                
+                allDone.WaitOne();
+                if (bCouponSuccess)
+                {
+                    break;
+                }
+
+                nCouponTimes++;
+            }
+        }
     };
 
     class AllPlayers
