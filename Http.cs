@@ -107,7 +107,6 @@ namespace bailian
                 HttpWebRequest myHttpWebRequest = myRequestState.request;
                 myRequestState.response = (HttpWebResponse)myHttpWebRequest.EndGetResponse(asynchronousResult);
 
-
                 ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
                 myRequestState.request = WebRequest.Create(string.Format(@"https://m.bl.com/h5-web/member/login.html?cacheFlag={0}", Http.Timestamp())) as HttpWebRequest;
                 myRequestState.request.ProtocolVersion = HttpVersion.Version11;
@@ -294,7 +293,7 @@ namespace bailian
                         {
                             stream.Write(data, 0, data.Length);
                         }
-                        IAsyncResult result = (IAsyncResult)myRequestState.request.BeginGetResponse(new AsyncCallback(RespGetCodeCallback), myRequestState);
+                        IAsyncResult result = (IAsyncResult)myRequestState.request.BeginGetResponse(new AsyncCallback(RespSendCouponCallback), myRequestState);
                     }
                 }
 
@@ -326,11 +325,18 @@ namespace bailian
                     {
                         Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, "成功");
                         bCouponSuccess = true;
-                        allDone.Set();
                     }
+                    else
+                    {
+                        Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, "失败");
+                    }
+                }
+                else 
+                {
                     Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, "失败");
                 }
 
+                allDone.Set();
                 return;
             }
             catch (WebException e)
@@ -370,7 +376,7 @@ namespace bailian
                 requestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
                 requestState.headers.Add("Accept-Encoding", "gzip, deflate");
                 requestState.request.CookieContainer = requestState.cookieContainer;
-                IAsyncResult result = (IAsyncResult)requestState.request.BeginGetResponse(new AsyncCallback(RespGetCodeCallback), requestState);
+                IAsyncResult result = (IAsyncResult)requestState.request.BeginGetResponse(new AsyncCallback(RespFirstCallback), requestState);
                 
                 allDone.WaitOne();
                 if (bLoginSuccess)
@@ -382,7 +388,9 @@ namespace bailian
         
             while ((DateTime.Now <= AllPlayers.dtEndTime))
             {
+                //Console.WriteLine(string.Format("{0}:sendcoupon:1", nCouponTimes));
                 allDone.Reset();
+                //Console.WriteLine(string.Format("{0}:sendcoupon:2", nCouponTimes));
                 
                 // 验证码
                 Program.form1.UpdateDataGridView(strAccount, Column.Detail, string.Format("第{0}次", nCouponTimes));
@@ -397,8 +405,10 @@ namespace bailian
                 requestState.headers.Add("Accept-Encoding", "gzip, deflate");
                 requestState.request.CookieContainer = requestState.cookieContainer;
                 requestState.request.BeginGetResponse(new AsyncCallback(RespDetailCallback), requestState);
-                
+
+                //Console.WriteLine(string.Format("{0}:sendcoupon:3", nCouponTimes));
                 allDone.WaitOne();
+                //Console.WriteLine(string.Format("{0}:sendcoupon:4", nCouponTimes));
                 if (bCouponSuccess)
                 {
                     break;
@@ -498,7 +508,7 @@ namespace bailian
             if (!bInitCnn)
             {
                 bInitCnn = true;
-                LCNN_INIT(System.Environment.CurrentDirectory + @"\" + "字母数字.cnn", "", 100);
+                LCNN_INIT(System.Environment.CurrentDirectory + @"\" + "ibailian.cnn", "", 100);
             }             
         }
 
