@@ -188,7 +188,6 @@ namespace bailian
                 myRequestState.response = (HttpWebResponse)myHttpWebRequest.EndGetResponse(asynchronousResult);
 
                 GetBody(myRequestState);
-                bool bNext = false;
                 if (myRequestState.body.Length > 0 && myRequestState.body.IndexOf("uuId") > 0)
                 {
                     uuId = @"";
@@ -210,30 +209,9 @@ namespace bailian
                     skuID = myRequestState.body.Substring(nskuIDValueIndex1, nskuIDValueIndex2 - nskuIDValueIndex1);
                     Program.form1.UpdateDataGridView(strAccount, Column.Detail, "成功");
 
-                    Program.form1.UpdateDataGridView(strAccount, Column.GetCode, string.Format("第{0}次", nCouponTimes));
-                    ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
-                    myRequestState.request = WebRequest.Create(@"http://killcoupon.bl.com/seckill-web/seckillDetail/getCode.html") as HttpWebRequest;
-                    myRequestState.request.ProtocolVersion = HttpVersion.Version11;
-                    myRequestState.request.Method = "POST";
-                    myRequestState.headers = myRequestState.request.Headers;
-                    myRequestState.headers.Add("Origin", "http://killcoupon.bl.com");
-                    myRequestState.request.Referer = "http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=" + AllPlayers.strSkuid;
-                    myRequestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
-                    myRequestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
-                    myRequestState.request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
-                    myRequestState.request.Accept = "application/json";
-                    myRequestState.headers.Add("X-Requested-With", "XMLHttpRequest");
-                    myRequestState.headers.Add("Accept-Encoding", "gzip, deflate");
-                    myRequestState.headers.Add("Pragma", "no-cache");
-                    myRequestState.request.CookieContainer = myRequestState.cookieContainer;
-                    IAsyncResult result = (IAsyncResult)myRequestState.request.BeginGetResponse(new AsyncCallback(RespGetCodeCallback), myRequestState);
-                    bNext = true;
                 }
 
-                if(!bNext)
-                {
-                    allDone.Set();
-                }
+                allDone.Set();
                 return;
             }
             catch (WebException e)
@@ -256,18 +234,19 @@ namespace bailian
                 myRequestState.response = (HttpWebResponse)myHttpWebRequest.EndGetResponse(asynchronousResult);
 
                 GetBody(myRequestState);
-                bool bNext = false;
+                bool bSuccess = false;
                 if (myRequestState.body.Length > 0 && myRequestState.body.IndexOf("success") >= 0)
                 {
                     JObject joBody = (JObject)JsonConvert.DeserializeObject(myRequestState.body);
                     if (string.Compare((string)joBody["success"], "true", true) == 0)
                     {
                         string strBase64 = @"";
-                        JToken outobj;
-                        if (joBody.TryGetValue("obj", out outobj) && outobj.HasValues)
+                        JToken outobj = joBody["obj"];
+                        if (outobj != null)
                         {
                             strBase64 = (string)joBody["obj"];
                             string strCoupon = Http.CnnFromImageBase64(strBase64);
+                            //Http.Base64StringToImage(System.Environment.CurrentDirectory + @"\" + @"pic", strBase64);
 
                             Program.form1.UpdateDataGridView(strAccount, Column.GetCode, "成功");
                             Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, string.Format("第{0}次", nCouponTimes));
@@ -297,12 +276,12 @@ namespace bailian
                                 stream.Write(data, 0, data.Length);
                             }
                             IAsyncResult result = (IAsyncResult)myRequestState.request.BeginGetResponse(new AsyncCallback(RespSendCouponCallback), myRequestState);
-                            bNext = true;
+                            bSuccess = true;
                         }
                     }
                 }
 
-                if (!bNext)
+                if (!bSuccess)
                 {
                     allDone.Set();
                 }
@@ -332,15 +311,19 @@ namespace bailian
                     JObject joBody = (JObject)JsonConvert.DeserializeObject(myRequestState.body);
                     if (string.Compare((string)joBody["success"], "true", true) == 0)
                     {
-                        Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, "成功");
                         bCouponSuccess = true;
+                        Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, "成功");
                     }
                     else
                     {
-                        Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, "失败");
+                        JToken outmsg = joBody["msg"];
+                        if (outmsg != null)
+                            Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, (string)joBody["msg"]);
+                        else
+                            Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, "失败");
                     }
                 }
-                else 
+                else
                 {
                     Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, "失败");
                 }
@@ -371,30 +354,81 @@ namespace bailian
             int nLoginTimes = 1;
             while(true)
             {
-                allDone.Reset();
-
                 Program.form1.UpdateDataGridView(strAccount, Column.Login, string.Format("开始登录:{0}", nLoginTimes));
-
-                ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
-                requestState.request = WebRequest.Create(AllPlayers.strURL) as HttpWebRequest;
-                requestState.request.ProtocolVersion = HttpVersion.Version11;
-                requestState.request.Method = "GET";
-                requestState.request.Accept = "text/html, application/xhtml+xml, image/jxr, */*";
-                requestState.headers = requestState.request.Headers;
-                requestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
-                requestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
-                requestState.headers.Add("Accept-Encoding", "gzip, deflate");
-                requestState.request.CookieContainer = requestState.cookieContainer;
-                IAsyncResult result = (IAsyncResult)requestState.request.BeginGetResponse(new AsyncCallback(RespFirstCallback), requestState);
+                try
+                {
+                    allDone.Reset();
+                    ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
+                    requestState.request = WebRequest.Create(AllPlayers.strURL) as HttpWebRequest;
+                    requestState.request.ProtocolVersion = HttpVersion.Version11;
+                    requestState.request.Method = "GET";
+                    requestState.request.Accept = "text/html, application/xhtml+xml, image/jxr, */*";
+                    requestState.headers = requestState.request.Headers;
+                    requestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
+                    requestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
+                    requestState.headers.Add("Accept-Encoding", "gzip, deflate");
+                    requestState.request.CookieContainer = requestState.cookieContainer;
+                    IAsyncResult result = (IAsyncResult)requestState.request.BeginGetResponse(new AsyncCallback(RespFirstCallback), requestState);
+                    allDone.WaitOne();
+                }
+                catch (WebException e)
+                {
+                    Console.WriteLine("\nRespCallback Exception raised!");
+                    Console.WriteLine("\nMessage:{0}", e.Message);
+                    Console.WriteLine("\nStatus:{0}", e.Status);
+                }
                 
-                allDone.WaitOne();
                 if (bLoginSuccess)
                 {
                     break;
                 }
                 nLoginTimes++;
+                if (nLoginTimes > 3)
+                {
+                    Program.form1.UpdateDataGridView(strAccount, Column.Login, string.Format("放弃"));
+                    return;
+                }
+                Thread.Sleep(10);
            }
 
+            nCouponTimes = 0;
+            while (true)
+            {
+                try 
+                {
+                    allDone.Reset();
+
+                    Program.form1.UpdateDataGridView(strAccount, Column.Detail, string.Format("第{0}次", nCouponTimes));
+                    ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
+                    requestState.request = WebRequest.Create(string.Format(@"http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID={0}", AllPlayers.strSkuid)) as HttpWebRequest;
+                    requestState.request.ProtocolVersion = HttpVersion.Version11;
+                    requestState.request.Method = "GET";
+                    requestState.request.Accept = "text/html, application/xhtml+xml, image/jxr, */*";
+                    requestState.headers = requestState.request.Headers;
+                    requestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
+                    requestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
+                    requestState.headers.Add("Accept-Encoding", "gzip, deflate");
+                    requestState.request.CookieContainer = requestState.cookieContainer;
+                    requestState.request.BeginGetResponse(new AsyncCallback(RespDetailCallback), requestState);
+
+                    allDone.WaitOne();
+                }
+                catch (WebException e)
+                {
+                    Console.WriteLine("\nRespCallback Exception raised!");
+                    Console.WriteLine("\nMessage:{0}", e.Message);
+                    Console.WriteLine("\nStatus:{0}", e.Status);
+                }
+
+                if (uuId != @"")
+                {
+                    break;
+                }
+                nCouponTimes++;
+                Thread.Sleep(10);
+            }
+
+            nCouponTimes = 0;
             while ((DateTime.Now < AllPlayers.dtStartTime))
             {
                 if ((AllPlayers.dtStartTime - DateTime.Now).TotalMilliseconds > 60000)
@@ -409,28 +443,10 @@ namespace bailian
 
             while ((DateTime.Now <= AllPlayers.dtEndTime))
             {
-                //Console.WriteLine(string.Format("{0}:sendcoupon:1", nCouponTimes));
-                allDone.Reset();
-                //Console.WriteLine(string.Format("{0}:sendcoupon:2", nCouponTimes));
-                
-                // 验证码
-                if (uuId == @"")
+                try 
                 {
-                    Program.form1.UpdateDataGridView(strAccount, Column.Detail, string.Format("第{0}次", nCouponTimes));
-                    ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
-                    requestState.request = WebRequest.Create(string.Format(@"http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID={0}", AllPlayers.strSkuid)) as HttpWebRequest;
-                    requestState.request.ProtocolVersion = HttpVersion.Version11;
-                    requestState.request.Method = "GET";
-                    requestState.request.Accept = "text/html, application/xhtml+xml, image/jxr, */*";
-                    requestState.headers = requestState.request.Headers;
-                    requestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
-                    requestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
-                    requestState.headers.Add("Accept-Encoding", "gzip, deflate");
-                    requestState.request.CookieContainer = requestState.cookieContainer;
-                    requestState.request.BeginGetResponse(new AsyncCallback(RespDetailCallback), requestState);
-                }
-                else
-                {
+                    allDone.Reset();
+
                     Program.form1.UpdateDataGridView(strAccount, Column.GetCode, string.Format("第{0}次", nCouponTimes));
                     ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
                     requestState.request = WebRequest.Create(@"http://killcoupon.bl.com/seckill-web/seckillDetail/getCode.html") as HttpWebRequest;
@@ -448,11 +464,16 @@ namespace bailian
                     requestState.headers.Add("Pragma", "no-cache");
                     requestState.request.CookieContainer = requestState.cookieContainer;
                     IAsyncResult result = (IAsyncResult)requestState.request.BeginGetResponse(new AsyncCallback(RespGetCodeCallback), requestState);
+
+                    allDone.WaitOne();
+                }
+                catch (WebException e)
+                {
+                    Console.WriteLine("\nRespCallback Exception raised!");
+                    Console.WriteLine("\nMessage:{0}", e.Message);
+                    Console.WriteLine("\nStatus:{0}", e.Status);
                 }
 
-                //Console.WriteLine(string.Format("{0}:sendcoupon:3", nCouponTimes));
-                allDone.WaitOne();
-                //Console.WriteLine(string.Format("{0}:sendcoupon:4", nCouponTimes));
                 if (bCouponSuccess)
                 {
                     break;
@@ -514,6 +535,7 @@ namespace bailian
             foreach (Player player in listPlayer)
             {
                 player.thread.Start();
+                Thread.Sleep(500);
             }
 
             foreach (Player player in listPlayer)
@@ -556,7 +578,7 @@ namespace bailian
             if (!bInitCnn)
             {
                 bInitCnn = true;
-                LCNN_INIT(System.Environment.CurrentDirectory + @"\" + "ibailian.cnn", "", 100);
+                LCNN_INIT(System.Environment.CurrentDirectory + "\\Newibailian.cnn", "", 100);
             }             
         }
 
