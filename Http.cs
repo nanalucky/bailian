@@ -188,6 +188,7 @@ namespace bailian
                 myRequestState.response = (HttpWebResponse)myHttpWebRequest.EndGetResponse(asynchronousResult);
 
                 GetBody(myRequestState);
+                bool bNext = false;
                 if (myRequestState.body.Length > 0 && myRequestState.body.IndexOf("uuId") > 0)
                 {
                     uuId = @"";
@@ -226,6 +227,12 @@ namespace bailian
                     myRequestState.headers.Add("Pragma", "no-cache");
                     myRequestState.request.CookieContainer = myRequestState.cookieContainer;
                     IAsyncResult result = (IAsyncResult)myRequestState.request.BeginGetResponse(new AsyncCallback(RespGetCodeCallback), myRequestState);
+                    bNext = true;
+                }
+
+                if(!bNext)
+                {
+                    allDone.Set();
                 }
                 return;
             }
@@ -249,6 +256,7 @@ namespace bailian
                 myRequestState.response = (HttpWebResponse)myHttpWebRequest.EndGetResponse(asynchronousResult);
 
                 GetBody(myRequestState);
+                bool bNext = false;
                 if (myRequestState.body.Length > 0 && myRequestState.body.IndexOf("success") >= 0)
                 {
                     JObject joBody = (JObject)JsonConvert.DeserializeObject(myRequestState.body);
@@ -256,47 +264,48 @@ namespace bailian
                     {
                         string strBase64 = @"";
                         JToken outobj;
-                        if (joBody.TryGetValue("obj", out outobj) && outobj.Type != JTokenType.Null)
+                        if (joBody.TryGetValue("obj", out outobj) && outobj.HasValues)
                         {
                             strBase64 = (string)joBody["obj"];
-                        }
-                        else
-                        {
-                            //strBase64 = File.ReadAllText(System.Environment.CurrentDirectory + "\\base64.txt");
-                        }
-                        string strCoupon = Http.CnnFromImageBase64(strBase64);
+                            string strCoupon = Http.CnnFromImageBase64(strBase64);
 
-                        Program.form1.UpdateDataGridView(strAccount, Column.GetCode, "成功");
-                        Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, string.Format("第{0}次", nCouponTimes));
-                        ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
-                        myRequestState.request = WebRequest.Create(@"http://killcoupon.bl.com/seckill-web/seckillDetail/sendCoupon.html") as HttpWebRequest;
-                        myRequestState.request.ProtocolVersion = HttpVersion.Version11;
-                        myRequestState.request.Method = "POST";
-                        myRequestState.headers = myRequestState.request.Headers;
-                        myRequestState.headers.Add("Origin", "http://killcoupon.bl.com");
-                        myRequestState.request.Referer = "http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=" + AllPlayers.strSkuid;
-                        myRequestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
-                        myRequestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
-                        myRequestState.request.ContentType = "application/x-www-form-urlencoded";
-                        myRequestState.request.Accept = "application/json";
-                        myRequestState.headers.Add("X-Requested-With", "XMLHttpRequest");
-                        myRequestState.headers.Add("Accept-Encoding", "gzip, deflate");
-                        myRequestState.headers.Add("Pragma", "no-cache");
-                        myRequestState.request.CookieContainer = myRequestState.cookieContainer;
-                        StringBuilder buffer = new StringBuilder();
-                        buffer.AppendFormat("{0}={1}", "activityCode", activityCode);
-                        buffer.AppendFormat("&{0}={1}", "code", Uri.EscapeDataString(strCoupon));
-                        buffer.AppendFormat("&{0}={1}", "skuID", skuID);
-                        buffer.AppendFormat("&{0}={1}", "uuID", uuId);
-                        Byte[] data = myRequestState.requestEncoding.GetBytes(buffer.ToString());
-                        using (Stream stream = myRequestState.request.GetRequestStream())
-                        {
-                            stream.Write(data, 0, data.Length);
+                            Program.form1.UpdateDataGridView(strAccount, Column.GetCode, "成功");
+                            Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, string.Format("第{0}次", nCouponTimes));
+                            ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
+                            myRequestState.request = WebRequest.Create(@"http://killcoupon.bl.com/seckill-web/seckillDetail/sendCoupon.html") as HttpWebRequest;
+                            myRequestState.request.ProtocolVersion = HttpVersion.Version11;
+                            myRequestState.request.Method = "POST";
+                            myRequestState.headers = myRequestState.request.Headers;
+                            myRequestState.headers.Add("Origin", "http://killcoupon.bl.com");
+                            myRequestState.request.Referer = "http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=" + AllPlayers.strSkuid;
+                            myRequestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
+                            myRequestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
+                            myRequestState.request.ContentType = "application/x-www-form-urlencoded";
+                            myRequestState.request.Accept = "application/json";
+                            myRequestState.headers.Add("X-Requested-With", "XMLHttpRequest");
+                            myRequestState.headers.Add("Accept-Encoding", "gzip, deflate");
+                            myRequestState.headers.Add("Pragma", "no-cache");
+                            myRequestState.request.CookieContainer = myRequestState.cookieContainer;
+                            StringBuilder buffer = new StringBuilder();
+                            buffer.AppendFormat("{0}={1}", "activityCode", activityCode);
+                            buffer.AppendFormat("&{0}={1}", "code", Uri.EscapeDataString(strCoupon));
+                            buffer.AppendFormat("&{0}={1}", "skuID", skuID);
+                            buffer.AppendFormat("&{0}={1}", "uuID", uuId);
+                            Byte[] data = myRequestState.requestEncoding.GetBytes(buffer.ToString());
+                            using (Stream stream = myRequestState.request.GetRequestStream())
+                            {
+                                stream.Write(data, 0, data.Length);
+                            }
+                            IAsyncResult result = (IAsyncResult)myRequestState.request.BeginGetResponse(new AsyncCallback(RespSendCouponCallback), myRequestState);
+                            bNext = true;
                         }
-                        IAsyncResult result = (IAsyncResult)myRequestState.request.BeginGetResponse(new AsyncCallback(RespSendCouponCallback), myRequestState);
                     }
                 }
 
+                if (!bNext)
+                {
+                    allDone.Set();
+                }
                 return;
             }
             catch (WebException e)
@@ -385,7 +394,19 @@ namespace bailian
                 }
                 nLoginTimes++;
            }
-        
+
+            while ((DateTime.Now < AllPlayers.dtStartTime))
+            {
+                if ((AllPlayers.dtStartTime - DateTime.Now).TotalMilliseconds > 60000)
+                    Thread.Sleep(60000);
+                else if ((AllPlayers.dtStartTime - DateTime.Now).TotalMilliseconds > 1000)
+                    Thread.Sleep(1000);
+                else if ((AllPlayers.dtStartTime - DateTime.Now).TotalMilliseconds > 50)
+                    Thread.Sleep(50);
+                else
+                    Thread.Sleep(1);
+            }
+
             while ((DateTime.Now <= AllPlayers.dtEndTime))
             {
                 //Console.WriteLine(string.Format("{0}:sendcoupon:1", nCouponTimes));
@@ -424,6 +445,7 @@ namespace bailian
         public static bool bSetProxy = false;
         public static string strURL = @"";
         public static string strSkuid = @"";
+        public static DateTime dtStartTime;
         public static DateTime dtEndTime;
         public static List<Player> listPlayer = new List<Player>();
 
@@ -436,6 +458,7 @@ namespace bailian
 
             string[] arrayConfig = File.ReadAllLines(szConfigFileName);
             JObject joInfo = (JObject)JsonConvert.DeserializeObject(arrayConfig[0]);
+            dtStartTime = DateTime.Parse((string)joInfo["StartTime"]);
             dtEndTime = DateTime.Parse((string)joInfo["EndTime"]);
             strSkuid = (string)joInfo["skuid"];
             strURL = (string)joInfo["URL"];
