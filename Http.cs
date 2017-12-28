@@ -216,7 +216,7 @@ namespace bailian
                     myRequestState.request.Method = "POST";
                     myRequestState.headers = myRequestState.request.Headers;
                     myRequestState.headers.Add("Origin", "http://killcoupon.bl.com");
-                    myRequestState.request.Referer = "http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=7970";
+                    myRequestState.request.Referer = "http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=" + AllPlayers.strSkuid;
                     myRequestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
                     myRequestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
                     myRequestState.request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
@@ -274,7 +274,7 @@ namespace bailian
                         myRequestState.request.Method = "POST";
                         myRequestState.headers = myRequestState.request.Headers;
                         myRequestState.headers.Add("Origin", "http://killcoupon.bl.com");
-                        myRequestState.request.Referer = "http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=7970";
+                        myRequestState.request.Referer = "http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=" + AllPlayers.strSkuid;
                         myRequestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
                         myRequestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
                         myRequestState.request.ContentType = "application/x-www-form-urlencoded";
@@ -395,7 +395,7 @@ namespace bailian
                 // 验证码
                 Program.form1.UpdateDataGridView(strAccount, Column.Detail, string.Format("第{0}次", nCouponTimes));
                 ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
-                requestState.request = WebRequest.Create(@"http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=7970") as HttpWebRequest;
+                requestState.request = WebRequest.Create(string.Format(@"http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID={0}", AllPlayers.strSkuid)) as HttpWebRequest;
                 requestState.request.ProtocolVersion = HttpVersion.Version11;
                 requestState.request.Method = "GET";
                 requestState.request.Accept = "text/html, application/xhtml+xml, image/jxr, */*";
@@ -423,6 +423,7 @@ namespace bailian
     {
         public static bool bSetProxy = false;
         public static string strURL = @"";
+        public static string strSkuid = @"";
         public static DateTime dtEndTime;
         public static List<Player> listPlayer = new List<Player>();
 
@@ -436,6 +437,7 @@ namespace bailian
             string[] arrayConfig = File.ReadAllLines(szConfigFileName);
             JObject joInfo = (JObject)JsonConvert.DeserializeObject(arrayConfig[0]);
             dtEndTime = DateTime.Parse((string)joInfo["EndTime"]);
+            strSkuid = (string)joInfo["skuid"];
             strURL = (string)joInfo["URL"];
             if ((string)joInfo["SetProxy"] == @"0")
                 bSetProxy = false;
