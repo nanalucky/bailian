@@ -340,6 +340,169 @@ namespace bailian
             }
         }
 
+
+        private void RespDetailCallback2(IAsyncResult asynchronousResult)
+        {
+            try
+            {
+                // State of request is asynchronous.
+                RequestState myRequestState = (RequestState)asynchronousResult.AsyncState;
+                HttpWebRequest myHttpWebRequest = myRequestState.request;
+                myRequestState.response = (HttpWebResponse)myHttpWebRequest.EndGetResponse(asynchronousResult);
+
+                GetBody(myRequestState);
+                if (myRequestState.body.Length > 0 && myRequestState.body.IndexOf("uuId") > 0)
+                {
+                    uuId = @"";
+                    int nuuIdIndex = myRequestState.body.IndexOf("uuId");
+                    int nuuIdValueIndex1 = myRequestState.body.IndexOf("=\"", nuuIdIndex) + 2;
+                    int nuuIdValueIndex2 = myRequestState.body.IndexOf("\"", nuuIdValueIndex1);
+                    uuId = myRequestState.body.Substring(nuuIdValueIndex1, nuuIdValueIndex2 - nuuIdValueIndex1);
+
+                    activityCode = @"";
+                    int nactivityCodeIndex = myRequestState.body.IndexOf("activityCode");
+                    int nactivityCodeValueIndex1 = myRequestState.body.IndexOf("=\"", nactivityCodeIndex) + 2;
+                    int nactivityCodeValueIndex2 = myRequestState.body.IndexOf("\"", nactivityCodeValueIndex1);
+                    activityCode = myRequestState.body.Substring(nactivityCodeValueIndex1, nactivityCodeValueIndex2 - nactivityCodeValueIndex1);
+
+                    skuID = @"";
+                    int nskuIDIndex = myRequestState.body.IndexOf("skuID");
+                    int nskuIDValueIndex1 = myRequestState.body.IndexOf("=\"", nskuIDIndex) + 2;
+                    int nskuIDValueIndex2 = myRequestState.body.IndexOf("\"", nskuIDValueIndex1);
+                    skuID = myRequestState.body.Substring(nskuIDValueIndex1, nskuIDValueIndex2 - nskuIDValueIndex1);
+                    Program.form1.UpdateDataGridView(strAccount, Column.Detail2, "成功");
+
+                }
+
+                allDone.Set();
+                return;
+            }
+            catch (WebException e)
+            {
+                Console.WriteLine("\nRespCallback Exception raised!");
+                Console.WriteLine("\nMessage:{0}", e.Message);
+                Console.WriteLine("\nStatus:{0}", e.Status);
+                allDone.Set();
+            }
+        }
+
+
+        private void RespGetCodeCallback2(IAsyncResult asynchronousResult)
+        {
+            try
+            {
+                // State of request is asynchronous.
+                RequestState myRequestState = (RequestState)asynchronousResult.AsyncState;
+                HttpWebRequest myHttpWebRequest = myRequestState.request;
+                myRequestState.response = (HttpWebResponse)myHttpWebRequest.EndGetResponse(asynchronousResult);
+
+                GetBody(myRequestState);
+                bool bSuccess = false;
+                if (myRequestState.body.Length > 0 && myRequestState.body.IndexOf("success") >= 0)
+                {
+                    JObject joBody = (JObject)JsonConvert.DeserializeObject(myRequestState.body);
+                    if (string.Compare((string)joBody["success"], "true", true) == 0)
+                    {
+                        string strBase64 = @"";
+                        JToken outobj = joBody["obj"];
+                        if (outobj != null)
+                        {
+                            strBase64 = (string)joBody["obj"];
+                            string strCoupon = Http.CnnFromImageBase64(strBase64);
+                            //Http.Base64StringToImage(System.Environment.CurrentDirectory + @"\" + @"pic", strBase64);
+
+                            Program.form1.UpdateDataGridView(strAccount, Column.GetCode2, "成功");
+                            Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon2, string.Format("第{0}次", nCouponTimes));
+                            ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
+                            myRequestState.request = WebRequest.Create(@"http://killcoupon.bl.com/seckill-web/seckillDetail/sendCoupon.html") as HttpWebRequest;
+                            myRequestState.request.ProtocolVersion = HttpVersion.Version11;
+                            myRequestState.request.Method = "POST";
+                            myRequestState.headers = myRequestState.request.Headers;
+                            myRequestState.headers.Add("Origin", "http://killcoupon.bl.com");
+                            myRequestState.request.Referer = "http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=" + AllPlayers.strSkuid2;
+                            myRequestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
+                            myRequestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
+                            myRequestState.request.ContentType = "application/x-www-form-urlencoded";
+                            myRequestState.request.Accept = "application/json";
+                            myRequestState.headers.Add("X-Requested-With", "XMLHttpRequest");
+                            myRequestState.headers.Add("Accept-Encoding", "gzip, deflate");
+                            myRequestState.headers.Add("Pragma", "no-cache");
+                            myRequestState.request.CookieContainer = myRequestState.cookieContainer;
+                            StringBuilder buffer = new StringBuilder();
+                            buffer.AppendFormat("{0}={1}", "activityCode", activityCode);
+                            buffer.AppendFormat("&{0}={1}", "code", Uri.EscapeDataString(strCoupon));
+                            buffer.AppendFormat("&{0}={1}", "skuID", skuID);
+                            buffer.AppendFormat("&{0}={1}", "uuID", uuId);
+                            Byte[] data = myRequestState.requestEncoding.GetBytes(buffer.ToString());
+                            using (Stream stream = myRequestState.request.GetRequestStream())
+                            {
+                                stream.Write(data, 0, data.Length);
+                            }
+                            IAsyncResult result = (IAsyncResult)myRequestState.request.BeginGetResponse(new AsyncCallback(RespSendCouponCallback2), myRequestState);
+                            bSuccess = true;
+                        }
+                    }
+                }
+
+                if (!bSuccess)
+                {
+                    allDone.Set();
+                }
+                return;
+            }
+            catch (WebException e)
+            {
+                Console.WriteLine("\nRespCallback Exception raised!");
+                Console.WriteLine("\nMessage:{0}", e.Message);
+                Console.WriteLine("\nStatus:{0}", e.Status);
+                allDone.Set();
+            }
+        }
+
+        private void RespSendCouponCallback2(IAsyncResult asynchronousResult)
+        {
+            try
+            {
+                // State of request is asynchronous.
+                RequestState myRequestState = (RequestState)asynchronousResult.AsyncState;
+                HttpWebRequest myHttpWebRequest = myRequestState.request;
+                myRequestState.response = (HttpWebResponse)myHttpWebRequest.EndGetResponse(asynchronousResult);
+
+                GetBody(myRequestState);
+                if (myRequestState.body.Length > 0 && myRequestState.body.IndexOf("success") > 0)
+                {
+                    JObject joBody = (JObject)JsonConvert.DeserializeObject(myRequestState.body);
+                    if (string.Compare((string)joBody["success"], "true", true) == 0)
+                    {
+                        bCouponSuccess = true;
+                        Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon2, "成功");
+                    }
+                    else
+                    {
+                        JToken outmsg = joBody["msg"];
+                        if (outmsg != null)
+                            Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon2, (string)joBody["msg"]);
+                        else
+                            Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon2, "失败");
+                    }
+                }
+                else
+                {
+                    Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon2, "失败");
+                }
+
+                allDone.Set();
+                return;
+            }
+            catch (WebException e)
+            {
+                Console.WriteLine("\nRespCallback Exception raised!");
+                Console.WriteLine("\nMessage:{0}", e.Message);
+                Console.WriteLine("\nStatus:{0}", e.Status);
+                allDone.Set();
+            }
+        }
+
         public void Run()
         {
             allDone = new ManualResetEvent(false);
@@ -388,7 +551,7 @@ namespace bailian
                     Program.form1.UpdateDataGridView(strAccount, Column.Login, string.Format("放弃"));
                     return;
                 }
-                Thread.Sleep(2000);
+                Thread.Sleep(500);
            }
 
             nCouponTimes = 0;
@@ -482,6 +645,96 @@ namespace bailian
                 nCouponTimes++;
                 Thread.Sleep(2000);
             }
+
+
+            if (AllPlayers.strSkuid2 != "")
+            {
+                uuId = @"";
+                skuID = @"";
+                activityCode = @"";
+                nCouponTimes = 0;
+                bCouponSuccess = false; 
+
+                while (true)
+                {
+                    try
+                    {
+                        allDone.Reset();
+
+                        Program.form1.UpdateDataGridView(strAccount, Column.Detail2, string.Format("第{0}次", nCouponTimes));
+                        ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
+                        requestState.request = WebRequest.Create(string.Format(@"http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID={0}", AllPlayers.strSkuid2)) as HttpWebRequest;
+                        requestState.request.ProtocolVersion = HttpVersion.Version11;
+                        requestState.request.Method = "GET";
+                        requestState.request.Accept = "text/html, application/xhtml+xml, image/jxr, */*";
+                        requestState.headers = requestState.request.Headers;
+                        requestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
+                        requestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
+                        requestState.headers.Add("Accept-Encoding", "gzip, deflate");
+                        requestState.request.CookieContainer = requestState.cookieContainer;
+                        requestState.request.BeginGetResponse(new AsyncCallback(RespDetailCallback2), requestState);
+
+                        allDone.WaitOne();
+                    }
+                    catch (WebException e)
+                    {
+                        Console.WriteLine("\nRespCallback Exception raised!");
+                        Console.WriteLine("\nMessage:{0}", e.Message);
+                        Console.WriteLine("\nStatus:{0}", e.Status);
+                    }
+
+                    if (uuId != @"")
+                    {
+                        break;
+                    }
+                    nCouponTimes++;
+                    Thread.Sleep(2000);
+                }
+
+                nCouponTimes = 0;
+                while ((DateTime.Now <= AllPlayers.dtEndTime))
+                {
+                    try
+                    {
+                        allDone.Reset();
+
+                        Program.form1.UpdateDataGridView(strAccount, Column.GetCode2, string.Format("第{0}次", nCouponTimes));
+                        ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
+                        requestState.request = WebRequest.Create(@"http://killcoupon.bl.com/seckill-web/seckillDetail/getCode.html") as HttpWebRequest;
+                        requestState.request.ProtocolVersion = HttpVersion.Version11;
+                        requestState.request.Method = "POST";
+                        requestState.headers = requestState.request.Headers;
+                        requestState.headers.Add("Origin", "http://killcoupon.bl.com");
+                        requestState.request.Referer = "http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=" + AllPlayers.strSkuid2;
+                        requestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
+                        requestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
+                        requestState.request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
+                        requestState.request.Accept = "application/json";
+                        requestState.headers.Add("X-Requested-With", "XMLHttpRequest");
+                        requestState.headers.Add("Accept-Encoding", "gzip, deflate");
+                        requestState.headers.Add("Pragma", "no-cache");
+                        requestState.request.CookieContainer = requestState.cookieContainer;
+                        IAsyncResult result = (IAsyncResult)requestState.request.BeginGetResponse(new AsyncCallback(RespGetCodeCallback2), requestState);
+
+                        allDone.WaitOne();
+                    }
+                    catch (WebException e)
+                    {
+                        Console.WriteLine("\nRespCallback Exception raised!");
+                        Console.WriteLine("\nMessage:{0}", e.Message);
+                        Console.WriteLine("\nStatus:{0}", e.Status);
+                    }
+
+                    if (bCouponSuccess)
+                    {
+                        break;
+                    }
+
+                    nCouponTimes++;
+                    Thread.Sleep(2000);
+                }            
+            
+            }
         }
     };
 
@@ -490,6 +743,7 @@ namespace bailian
         public static bool bSetProxy = false;
         public static string strURL = @"";
         public static string strSkuid = @"";
+        public static string strSkuid2 = @"";
         public static DateTime dtStartTime;
         public static DateTime dtEndTime;
         public static List<Player> listPlayer = new List<Player>();
@@ -506,6 +760,7 @@ namespace bailian
             dtStartTime = DateTime.Parse((string)joInfo["StartTime"]);
             dtEndTime = DateTime.Parse((string)joInfo["EndTime"]);
             strSkuid = (string)joInfo["skuid"];
+            strSkuid2 = (string)joInfo["skuid2"];
             strURL = (string)joInfo["URL"];
             if ((string)joInfo["SetProxy"] == @"0")
                 bSetProxy = false;

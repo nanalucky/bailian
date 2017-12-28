@@ -17,7 +17,10 @@ namespace bailian
         Login,
         Detail,
         GetCode,
-        SendCoupon
+        SendCoupon,
+        Detail2,
+        GetCode2,
+        SendCoupon2
     };
     
     

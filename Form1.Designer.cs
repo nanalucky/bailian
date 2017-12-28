@@ -28,11 +28,14 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
             this.richTextBoxStatus = new System.Windows.Forms.RichTextBox();
             this.dataGridViewInfo = new System.Windows.Forms.DataGridView();
             this.button1 = new System.Windows.Forms.Button();
@@ -41,6 +44,9 @@
             this.Detail = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.GetCode = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.SendCoupon = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Detail2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.GetCode2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.SendCoupon2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewInfo)).BeginInit();
             this.SuspendLayout();
             // 
@@ -60,7 +66,10 @@
             this.Login,
             this.Detail,
             this.GetCode,
-            this.SendCoupon});
+            this.SendCoupon,
+            this.Detail2,
+            this.GetCode2,
+            this.SendCoupon2});
             this.dataGridViewInfo.Location = new System.Drawing.Point(27, 131);
             this.dataGridViewInfo.Name = "dataGridViewInfo";
             this.dataGridViewInfo.RowTemplate.Height = 30;
@@ -79,16 +88,16 @@
             // 
             // Telephone
             // 
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            this.Telephone.DefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.Telephone.DefaultCellStyle = dataGridViewCellStyle1;
             this.Telephone.HeaderText = "Telephone";
             this.Telephone.Name = "Telephone";
             this.Telephone.ReadOnly = true;
             // 
             // Login
             // 
-            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            this.Login.DefaultCellStyle = dataGridViewCellStyle7;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.Login.DefaultCellStyle = dataGridViewCellStyle2;
             this.Login.HeaderText = "登录";
             this.Login.Name = "Login";
             this.Login.ReadOnly = true;
@@ -96,8 +105,8 @@
             // 
             // Detail
             // 
-            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            this.Detail.DefaultCellStyle = dataGridViewCellStyle8;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.Detail.DefaultCellStyle = dataGridViewCellStyle3;
             this.Detail.HeaderText = "Detail";
             this.Detail.Name = "Detail";
             this.Detail.ReadOnly = true;
@@ -105,8 +114,8 @@
             // 
             // GetCode
             // 
-            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            this.GetCode.DefaultCellStyle = dataGridViewCellStyle9;
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.GetCode.DefaultCellStyle = dataGridViewCellStyle4;
             this.GetCode.HeaderText = "GetCode";
             this.GetCode.Name = "GetCode";
             this.GetCode.ReadOnly = true;
@@ -114,12 +123,39 @@
             // 
             // SendCoupon
             // 
-            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            this.SendCoupon.DefaultCellStyle = dataGridViewCellStyle10;
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.SendCoupon.DefaultCellStyle = dataGridViewCellStyle5;
             this.SendCoupon.HeaderText = "SendCoupon";
             this.SendCoupon.Name = "SendCoupon";
             this.SendCoupon.ReadOnly = true;
             this.SendCoupon.Width = 120;
+            // 
+            // Detail2
+            // 
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.Detail2.DefaultCellStyle = dataGridViewCellStyle6;
+            this.Detail2.HeaderText = "Detail2";
+            this.Detail2.Name = "Detail2";
+            this.Detail2.ReadOnly = true;
+            this.Detail2.Width = 120;
+            // 
+            // GetCode2
+            // 
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.GetCode2.DefaultCellStyle = dataGridViewCellStyle7;
+            this.GetCode2.HeaderText = "GetCode2";
+            this.GetCode2.Name = "GetCode2";
+            this.GetCode2.ReadOnly = true;
+            this.GetCode2.Width = 120;
+            // 
+            // SendCoupon2
+            // 
+            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.SendCoupon2.DefaultCellStyle = dataGridViewCellStyle8;
+            this.SendCoupon2.HeaderText = "SendCoupon2";
+            this.SendCoupon2.Name = "SendCoupon2";
+            this.SendCoupon2.ReadOnly = true;
+            this.SendCoupon2.Width = 120;
             // 
             // Form1
             // 
@@ -147,6 +183,9 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Detail;
         private System.Windows.Forms.DataGridViewTextBoxColumn GetCode;
         private System.Windows.Forms.DataGridViewTextBoxColumn SendCoupon;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Detail2;
+        private System.Windows.Forms.DataGridViewTextBoxColumn GetCode2;
+        private System.Windows.Forms.DataGridViewTextBoxColumn SendCoupon2;
     }
 }
 
