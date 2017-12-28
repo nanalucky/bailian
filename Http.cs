@@ -178,6 +178,18 @@ namespace bailian
                         JObject joBody = (JObject)JsonConvert.DeserializeObject(body);
                         if (string.Compare((string)joBody["success"], "true", true) == 0)
                         {
+                            string strBase64 = @"";
+                            JToken outResCode;
+                            if (joBody.TryGetValue("resCode", out outResCode) && outResCode.Type != JTokenType.Null)
+                            {
+                                strBase64 = (string)joBody["resCode"];
+                            }
+                            else
+                            {
+                                //strBase64 = File.ReadAllText(System.Environment.CurrentDirectory + "\\base64.txt");
+                            }
+                            string strCoupon = Http.CnnFromImageBase64(strBase64);
+
                             Program.form1.UpdateDataGridView(strAccount, Column.GetCode, "成功");
                             Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, string.Format("第{0}次", nCouponTimes));
                             ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
@@ -196,7 +208,7 @@ namespace bailian
                             request.CookieContainer = loginCookieContainer;
                             StringBuilder buffer = new StringBuilder();
                             buffer.AppendFormat("{0}={1}", "activityCode", activityCode);
-                            buffer.AppendFormat("&{0}={1}", "code", Uri.EscapeDataString("验证码答案"));
+                            buffer.AppendFormat("&{0}={1}", "code", Uri.EscapeDataString(strCoupon));
                             buffer.AppendFormat("&{0}={1}", "skuID", skuID);
                             buffer.AppendFormat("&{0}={1}", "uuID", uuId);
                             Byte[] data = requestEncoding.GetBytes(buffer.ToString());
@@ -301,7 +313,9 @@ namespace bailian
 
         public static void ReadSecurityImage()
         {
-            string strRet = Http.Cnn(System.Environment.CurrentDirectory + @"\" + @"pic.bmp");
+            //string strRet = Http.Cnn(System.Environment.CurrentDirectory + @"\" + @"pic.bmp");
+            string strBase64 = File.ReadAllText(System.Environment.CurrentDirectory + @"\" + @"base64.txt");
+            string strRet = Http.CnnFromImageBase64(strBase64);
             Console.WriteLine(@"CNN:" + strRet);
         }
     };
@@ -366,7 +380,17 @@ namespace bailian
             StringBuilder sb = CNN_OCR(1, img, img.Length, 0);
             return sb.ToString();
         }
-      
+
+        public static string CnnFromImageByte(byte[] img)
+        {
+            StringBuilder sb = CNN_OCR(1, img, img.Length, 0);
+            return sb.ToString();
+        }
+
+        public static string CnnFromImageBase64(string strBase64)
+        {
+            return CnnFromImageByte(Convert.FromBase64String(strBase64));
+        }
         
         public static bool CheckValidationResult(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors)
         {
