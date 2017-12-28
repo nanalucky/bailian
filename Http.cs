@@ -414,18 +414,41 @@ namespace bailian
                 //Console.WriteLine(string.Format("{0}:sendcoupon:2", nCouponTimes));
                 
                 // 验证码
-                Program.form1.UpdateDataGridView(strAccount, Column.Detail, string.Format("第{0}次", nCouponTimes));
-                ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
-                requestState.request = WebRequest.Create(string.Format(@"http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID={0}", AllPlayers.strSkuid)) as HttpWebRequest;
-                requestState.request.ProtocolVersion = HttpVersion.Version11;
-                requestState.request.Method = "GET";
-                requestState.request.Accept = "text/html, application/xhtml+xml, image/jxr, */*";
-                requestState.headers = requestState.request.Headers;
-                requestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
-                requestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
-                requestState.headers.Add("Accept-Encoding", "gzip, deflate");
-                requestState.request.CookieContainer = requestState.cookieContainer;
-                requestState.request.BeginGetResponse(new AsyncCallback(RespDetailCallback), requestState);
+                if (uuId == @"")
+                {
+                    Program.form1.UpdateDataGridView(strAccount, Column.Detail, string.Format("第{0}次", nCouponTimes));
+                    ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
+                    requestState.request = WebRequest.Create(string.Format(@"http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID={0}", AllPlayers.strSkuid)) as HttpWebRequest;
+                    requestState.request.ProtocolVersion = HttpVersion.Version11;
+                    requestState.request.Method = "GET";
+                    requestState.request.Accept = "text/html, application/xhtml+xml, image/jxr, */*";
+                    requestState.headers = requestState.request.Headers;
+                    requestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
+                    requestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
+                    requestState.headers.Add("Accept-Encoding", "gzip, deflate");
+                    requestState.request.CookieContainer = requestState.cookieContainer;
+                    requestState.request.BeginGetResponse(new AsyncCallback(RespDetailCallback), requestState);
+                }
+                else
+                {
+                    Program.form1.UpdateDataGridView(strAccount, Column.GetCode, string.Format("第{0}次", nCouponTimes));
+                    ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
+                    requestState.request = WebRequest.Create(@"http://killcoupon.bl.com/seckill-web/seckillDetail/getCode.html") as HttpWebRequest;
+                    requestState.request.ProtocolVersion = HttpVersion.Version11;
+                    requestState.request.Method = "POST";
+                    requestState.headers = requestState.request.Headers;
+                    requestState.headers.Add("Origin", "http://killcoupon.bl.com");
+                    requestState.request.Referer = "http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=" + AllPlayers.strSkuid;
+                    requestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
+                    requestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
+                    requestState.request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
+                    requestState.request.Accept = "application/json";
+                    requestState.headers.Add("X-Requested-With", "XMLHttpRequest");
+                    requestState.headers.Add("Accept-Encoding", "gzip, deflate");
+                    requestState.headers.Add("Pragma", "no-cache");
+                    requestState.request.CookieContainer = requestState.cookieContainer;
+                    IAsyncResult result = (IAsyncResult)requestState.request.BeginGetResponse(new AsyncCallback(RespGetCodeCallback), requestState);
+                }
 
                 //Console.WriteLine(string.Format("{0}:sendcoupon:3", nCouponTimes));
                 allDone.WaitOne();
