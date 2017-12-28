@@ -388,7 +388,7 @@ namespace bailian
                     Program.form1.UpdateDataGridView(strAccount, Column.Login, string.Format("放弃"));
                     return;
                 }
-                Thread.Sleep(10);
+                Thread.Sleep(2000);
            }
 
             nCouponTimes = 0;
@@ -425,7 +425,7 @@ namespace bailian
                     break;
                 }
                 nCouponTimes++;
-                Thread.Sleep(10);
+                Thread.Sleep(2000);
             }
 
             nCouponTimes = 0;
@@ -480,6 +480,7 @@ namespace bailian
                 }
 
                 nCouponTimes++;
+                Thread.Sleep(2000);
             }
         }
     };
