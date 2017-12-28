@@ -262,7 +262,7 @@ namespace bailian
             Http.InitCnn();
             
             string szConfigFileName = System.Environment.CurrentDirectory + @"\" + @"config.txt";
-            string szAccountFileName = System.Environment.CurrentDirectory + @"\" + @"account.txt";
+            string szAccountFileName = System.Environment.CurrentDirectory + @"\" + @"account.csv";
 
             string[] arrayConfig = File.ReadAllLines(szConfigFileName);
             JObject joInfo = (JObject)JsonConvert.DeserializeObject(arrayConfig[0]);
@@ -276,15 +276,18 @@ namespace bailian
 
             listPlayer = new List<Player>();
             string[] arrayText = File.ReadAllLines(szAccountFileName);
-            for (int i = 1; i < arrayText.Length; ++i)
+            for (int i = 0; i < arrayText.Length; ++i)
             {
                 string[] arrayParam = arrayText[i].Split(new char[] { ',' });
-                Player player = new Player();
-                player.strAccount = arrayParam[0];
-                player.strPassword = arrayParam[1];
-                player.thread = new Thread(new ThreadStart(player.Run));
-                listPlayer.Add(player);
-                Program.form1.dataGridViewInfo_AddRow(arrayParam[0]);
+                if (arrayParam.Length >= 3)
+                {
+                    Player player = new Player();
+                    player.strAccount = arrayParam[1];
+                    player.strPassword = arrayParam[2];
+                    player.thread = new Thread(new ThreadStart(player.Run));
+                    listPlayer.Add(player);
+                    Program.form1.dataGridViewInfo_AddRow(arrayParam[1]);
+                }
             }
         }
 
