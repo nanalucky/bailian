@@ -119,7 +119,7 @@ namespace bailian
                 return;
         
             int nCouponTimes = 1;
-            while (true)
+            while ((DateTime.Now <= AllPlayers.dtEndTime))
             {
                 // 验证码
                 Program.form1.UpdateDataGridView(strAccount, Column.Detail, string.Format("第{0}次", nCouponTimes));
@@ -234,16 +234,8 @@ namespace bailian
                 }
 
                 nCouponTimes++;
-                if (nCouponTimes > 10)
-                {
-                    Program.form1.UpdateDataGridView(strAccount, Column.Detail, "放弃");
-                    Program.form1.UpdateDataGridView(strAccount, Column.GetCode, "放弃");
-                    Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, "放弃");
-                    break;
-                }
+                Thread.Sleep(1);
             }
-            if (nCouponTimes > 10)
-                return;
 
         }
 
@@ -254,7 +246,7 @@ namespace bailian
     {
         public static bool bSetProxy = false;
         public static string strURL = @"";
-        public static DateTime dtStartTime;
+        public static DateTime dtEndTime;
         public static List<Player> listPlayer = new List<Player>();
 
         public static void Init()
@@ -266,7 +258,7 @@ namespace bailian
 
             string[] arrayConfig = File.ReadAllLines(szConfigFileName);
             JObject joInfo = (JObject)JsonConvert.DeserializeObject(arrayConfig[0]);
-            dtStartTime = DateTime.Parse((string)joInfo["StartTime"]);
+            dtEndTime = DateTime.Parse((string)joInfo["EndTime"]);
             strURL = (string)joInfo["URL"];
             if ((string)joInfo["SetProxy"] == @"0")
                 bSetProxy = false;
