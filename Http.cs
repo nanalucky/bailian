@@ -242,7 +242,7 @@ namespace bailian
                     {
                         string strBase64 = @"";
                         JToken outobj = joBody["obj"];
-                        if (outobj != null)
+                        if (outobj != null && ((string)outobj).Length != 0 && string.Compare(((string)outobj), "null", true) != 0 )
                         {
                             strBase64 = (string)joBody["obj"];
                             string strCoupon = Http.CnnFromImageBase64(strBase64);
@@ -317,8 +317,8 @@ namespace bailian
                     else
                     {
                         JToken outmsg = joBody["msg"];
-                        if (outmsg != null)
-                            Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, (string)joBody["msg"]);
+                        if (outmsg != null && ((string)outmsg).Length != 0 && string.Compare(((string)outmsg), "null", true) != 0) 
+                                Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, (string)joBody["msg"]);
                         else
                             Program.form1.UpdateDataGridView(strAccount, Column.SendCoupon, "失败");
                     }
@@ -405,7 +405,7 @@ namespace bailian
                     {
                         string strBase64 = @"";
                         JToken outobj = joBody["obj"];
-                        if (outobj != null)
+                        if (outobj != null && ((string)outobj).Length != 0 && string.Compare(((string)outobj), "null", true) != 0)
                         {
                             strBase64 = (string)joBody["obj"];
                             string strCoupon = Http.CnnFromImageBase64(strBase64);
