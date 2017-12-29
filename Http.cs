@@ -245,7 +245,8 @@ namespace bailian
                         if (outobj != null && ((string)outobj).Length != 0 && string.Compare(((string)outobj), "null", true) != 0 )
                         {
                             strBase64 = (string)joBody["obj"];
-                            string strCoupon = Http.CnnFromImageBase64(strBase64);
+                            //strBase64 = File.ReadAllText(System.Environment.CurrentDirectory + "\\base64.txt");
+                            string strCoupon = Http.CnnFromImageBase64(strBase64, strAccount);
                             //Http.Base64StringToImage(System.Environment.CurrentDirectory + @"\" + @"pic", strBase64);
 
                             Program.form1.UpdateDataGridView(strAccount, Column.GetCode, "成功");
@@ -408,7 +409,8 @@ namespace bailian
                         if (outobj != null && ((string)outobj).Length != 0 && string.Compare(((string)outobj), "null", true) != 0)
                         {
                             strBase64 = (string)joBody["obj"];
-                            string strCoupon = Http.CnnFromImageBase64(strBase64);
+                            //strBase64 = File.ReadAllText(System.Environment.CurrentDirectory + "\\base64.txt");
+                            string strCoupon = Http.CnnFromImageBase64(strBase64, strAccount);
                             //Http.Base64StringToImage(System.Environment.CurrentDirectory + @"\" + @"pic", strBase64);
 
                             Program.form1.UpdateDataGridView(strAccount, Column.GetCode2, "成功");
@@ -688,7 +690,7 @@ namespace bailian
                         break;
                     }
                     nCouponTimes++;
-                    Thread.Sleep(2000);
+                    Thread.Sleep(1000);
                 }
 
                 nCouponTimes = 0;
@@ -751,7 +753,39 @@ namespace bailian
         public static void Init()
         {
             Http.InitCnn();
-            
+
+/*
+            string strPic = System.Environment.CurrentDirectory + @"\" + @"pic.bmp";
+            string ret = Http.Cnn(strPic);
+            int n = 1;
+            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
+            ret = Http.Cnn(strPic);
+            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
+            ret = Http.Cnn(strPic);
+            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
+            ret = Http.Cnn(strPic);
+            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
+            ret = Http.Cnn(strPic);
+            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
+            ret = Http.Cnn(strPic);
+            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
+            ret = Http.Cnn(strPic);
+            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
+            ret = Http.Cnn(strPic);
+            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
+            ret = Http.Cnn(strPic);
+            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
+            ret = Http.Cnn(strPic);
+            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
+            ret = Http.Cnn(strPic);
+            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
+            ret = Http.Cnn(strPic);
+            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
+            ret = Http.Cnn(strPic);
+            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
+            ret = Http.Cnn(strPic);
+            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
+*/
             string szConfigFileName = System.Environment.CurrentDirectory + @"\" + @"config.txt";
             string szAccountFileName = System.Environment.CurrentDirectory + @"\" + @"account.csv";
 
@@ -813,7 +847,7 @@ namespace bailian
         {
             //string strRet = Http.Cnn(System.Environment.CurrentDirectory + @"\" + @"pic.bmp");
             string strBase64 = File.ReadAllText(System.Environment.CurrentDirectory + @"\" + @"base64.txt");
-            string strRet = Http.CnnFromImageBase64(strBase64);
+            string strRet = Http.CnnFromImageBase64(strBase64, "123456");
             Console.WriteLine(@"CNN:" + strRet);
         }
     };
@@ -822,21 +856,41 @@ namespace bailian
     
     class Http
     {
-        [DllImport("OCR.dll")]
-        public static extern StringBuilder CNN_OCR(int index, byte[] FileBuffer, int imglen, int zxd);
-        [DllImport("OCR.dll")]
-        public static extern int LCNN_INIT(string path, string ps, int threads);
+        [DllImport("Sunday.dll")]
+        public static extern int LoadLibFromFile(string LibFilePath, string nSecret);
+
+
+
+        [DllImport("Sunday.dll")]
+        public static extern bool GetCodeFromFile(int LibFileIndex, string FilePath, StringBuilder Code);//从文件识别
+
+        [DllImport("Sunday.dll")]
+        public static extern bool GetCodeFromBuffer(int LibFileIndex, byte[] FileBuffer, int ImgBufLen, StringBuilder Code);//从流识别
+
+        [DllImport("urlmon.dll", EntryPoint = "URLDownloadToFileA")]
+        public static extern int URLDownloadToFile(int pCaller, string szURL, string szFileName, int dwReserved, int lpfnCB);
 
         public static bool bInitCnn = false;
+        public static Object myLock = new Object();
+        public static int nIndex;
 
         public static void InitCnn()
         {
             if (!bInitCnn)
             {
                 bInitCnn = true;
-                LCNN_INIT(System.Environment.CurrentDirectory + "\\Newibailian.cnn", "", 100);
+                nIndex = LoadLibFromFile("OCR.lib", "123");//此函数只用调用一次 不用多次加载 一定要用绝对路径
+                if (!(nIndex == -1))
+                {
+                    Console.WriteLine("ocr ok");
+                }
             }             
         }
+
+        //private static object LoadLibFromFile(string p1, string p2)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
         public static byte[] ImageToBytes(Image image)
         {
@@ -873,21 +927,57 @@ namespace bailian
 
         public static string Cnn(string imgPath)
         {
-            Image img1 = Image.FromFile(imgPath);
-            byte[] img = ImageToBytes(img1);
-            StringBuilder sb = CNN_OCR(1, img, img.Length, 0);
-            return sb.ToString();
+            StringBuilder Result = new StringBuilder('\0', 256);
+
+            //以下使用GetVcodeFromURL接口
+            //			if(GetVcodeFromURL(index,textBox2.Text,Result))
+            //				textBox3.Text = Result.ToString();
+            //			else
+            //				textBox3.Text = "识别失败";
+
+            //string ImgPath = System.Environment.CurrentDirectory + "\\1.jpg";
+
+
+            FileStream fsMyfile = File.OpenRead(imgPath);
+            int FileLen = (int)fsMyfile.Length;
+            byte[] Buffer = new byte[FileLen];
+            fsMyfile.Read(Buffer, 0, FileLen);
+            fsMyfile.Close();
+            //多线程请在这里加锁 进入许可区
+            lock (myLock)
+            {
+                GetCodeFromBuffer(nIndex, Buffer, FileLen, Result);
+            }
+            return Result.ToString();
         }
 
-        public static string CnnFromImageByte(byte[] img)
+        public static string CnnFromImageByte(byte[] data)
         {
-            StringBuilder sb = CNN_OCR(1, img, img.Length, 0);
-            return sb.ToString();
+/*            try
+            {
+                string msg = null;
+                int bufferlen = 1024;
+                IntPtr buffer = Marshal.AllocHGlobal(bufferlen);
+                CNN_OCR(data, data.Length, buffer, bufferlen);
+                msg = Marshal.PtrToStringAnsi(buffer);
+                Marshal.FreeHGlobal(buffer);
+                return msg;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+ *
+ */
+            return "";
         }
 
-        public static string CnnFromImageBase64(string strBase64)
+        public static string CnnFromImageBase64(string strBase64, string account)
         {
-            return CnnFromImageByte(Convert.FromBase64String(strBase64));
+            string strImagePath = System.Environment.CurrentDirectory + "\\jpg\\" + account;
+            Http.Base64StringToImage(System.Environment.CurrentDirectory + "\\jpg\\" + account, strBase64);
+            strImagePath = strImagePath + ".jpg";
+            return Cnn(strImagePath);;
         }
         
         public static bool CheckValidationResult(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors)
@@ -931,8 +1021,8 @@ namespace bailian
                 MemoryStream ms = new MemoryStream(arr);
                 Bitmap bmp = new Bitmap(ms);
 
-                //bmp.Save(txtFileName + ".jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
-                bmp.Save(txtFileName + ".bmp", System.Drawing.Imaging.ImageFormat.Bmp);
+                bmp.Save(txtFileName + ".jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
+                //bmp.Save(txtFileName + ".bmp", System.Drawing.Imaging.ImageFormat.Bmp);
                 //bmp.Save(txtFileName + ".gif", ImageFormat.Gif);
                 //bmp.Save(txtFileName + ".png", ImageFormat.Png);
                 ms.Close();
