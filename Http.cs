@@ -113,7 +113,7 @@ namespace bailian
                 myRequestState.request.Method = "POST";
                 myRequestState.headers = myRequestState.request.Headers;
                 myRequestState.headers.Add("Origin", "https://m.bl.com");
-                myRequestState.request.Referer = "https://m.bl.com/h5-web/member/view_login.html?redirctUrl=https%3A%2F%2Fm.bl.com%2Fh5-web%2Fseckill%2Fview_Login_Seckill.html%3FseckillFlag%3D1%26actTime%3DMS_2016122811150%26skuID%3D4271";
+                myRequestState.request.Referer = string.Format("https://m.bl.com/h5-web/member/view_login.html?redirctUrl=https%3A%2F%2Fm.bl.com%2Fh5-web%2Fseckill%2Fview_Login_Seckill.html%3FseckillFlag%3D1%26actTime%3D{0}%26skuID%3D{1}", AllPlayers.strActTime, AllPlayers.strSkuid);
                 myRequestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
                 myRequestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
                 myRequestState.request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
@@ -126,7 +126,7 @@ namespace bailian
                 buffer.AppendFormat("{0}={1}", "loginName", strAccount);
                 buffer.AppendFormat("&{0}={1}", "password", Http.UserMd5(strPassword));
                 buffer.AppendFormat("&{0}={1}", "type", "1");
-                buffer.AppendFormat("&{0}={1}", "relocationRUL", Uri.EscapeDataString("https://m.bl.com/h5-web/seckill/view_Login_Seckill.html?seckillFlag=1&actTime=MS_2016122811150&skuID=4271"));
+                buffer.AppendFormat("&{0}={1}", "relocationRUL", Uri.EscapeDataString(string.Format("https://m.bl.com/h5-web/seckill/view_Login_Seckill.html?seckillFlag=1&actTime={0}&skuID={1}", AllPlayers.strActTime, AllPlayers.strSkuid)));
                 buffer.AppendFormat("&{0}={1}", "mpFlag", "");
                 Byte[] data = myRequestState.requestEncoding.GetBytes(buffer.ToString());
                 using (Stream stream = myRequestState.request.GetRequestStream())
@@ -257,7 +257,6 @@ namespace bailian
                             myRequestState.request.Method = "POST";
                             myRequestState.headers = myRequestState.request.Headers;
                             myRequestState.headers.Add("Origin", "http://killcoupon.bl.com");
-                            myRequestState.request.Referer = "http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=" + AllPlayers.strSkuid;
                             myRequestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
                             myRequestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
                             myRequestState.request.ContentType = "application/x-www-form-urlencoded";
@@ -421,7 +420,6 @@ namespace bailian
                             myRequestState.request.Method = "POST";
                             myRequestState.headers = myRequestState.request.Headers;
                             myRequestState.headers.Add("Origin", "http://killcoupon.bl.com");
-                            myRequestState.request.Referer = "http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=" + AllPlayers.strSkuid2;
                             myRequestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
                             myRequestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
                             myRequestState.request.ContentType = "application/x-www-form-urlencoded";
@@ -565,7 +563,7 @@ namespace bailian
 
                     Program.form1.UpdateDataGridView(strAccount, Column.Detail, string.Format("第{0}次", nCouponTimes));
                     ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
-                    requestState.request = WebRequest.Create(string.Format(@"http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID={0}", AllPlayers.strSkuid)) as HttpWebRequest;
+                    requestState.request = WebRequest.Create(string.Format(@"http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime={0}&skuID={1}", AllPlayers.strActTime, AllPlayers.strSkuid)) as HttpWebRequest;
                     requestState.request.ProtocolVersion = HttpVersion.Version11;
                     requestState.request.Method = "GET";
                     requestState.request.Accept = "text/html, application/xhtml+xml, image/jxr, */*";
@@ -590,7 +588,7 @@ namespace bailian
                     break;
                 }
                 nCouponTimes++;
-                Thread.Sleep(2000);
+                Thread.Sleep(1000);
             }
 
             nCouponTimes = 0;
@@ -619,7 +617,7 @@ namespace bailian
                     requestState.request.Method = "POST";
                     requestState.headers = requestState.request.Headers;
                     requestState.headers.Add("Origin", "http://killcoupon.bl.com");
-                    requestState.request.Referer = "http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=" + AllPlayers.strSkuid;
+                    requestState.request.Referer = string.Format("http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime={0}&skuID={1}", AllPlayers.strActTime, AllPlayers.strSkuid);
                     requestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
                     requestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
                     requestState.request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
@@ -645,7 +643,7 @@ namespace bailian
                 }
 
                 nCouponTimes++;
-                Thread.Sleep(2000);
+                Thread.Sleep(1000);
             }
 
 
@@ -665,7 +663,7 @@ namespace bailian
 
                         Program.form1.UpdateDataGridView(strAccount, Column.Detail2, string.Format("第{0}次", nCouponTimes));
                         ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(Http.CheckValidationResult);
-                        requestState.request = WebRequest.Create(string.Format(@"http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID={0}", AllPlayers.strSkuid2)) as HttpWebRequest;
+                        requestState.request = WebRequest.Create(string.Format(@"http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime={0}&skuID={1}", AllPlayers.strActTime, AllPlayers.strSkuid2)) as HttpWebRequest;
                         requestState.request.ProtocolVersion = HttpVersion.Version11;
                         requestState.request.Method = "GET";
                         requestState.request.Accept = "text/html, application/xhtml+xml, image/jxr, */*";
@@ -707,7 +705,7 @@ namespace bailian
                         requestState.request.Method = "POST";
                         requestState.headers = requestState.request.Headers;
                         requestState.headers.Add("Origin", "http://killcoupon.bl.com");
-                        requestState.request.Referer = "http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime=MSQ_201712281130&skuID=" + AllPlayers.strSkuid2;
+                        requestState.request.Referer = string.Format("http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime={0}&skuID={1}", AllPlayers.strActTime, AllPlayers.strSkuid2);
                         requestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
                         requestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
                         requestState.request.ContentType = "application/x-www-form-urlencoded; charset=UTF-8";
@@ -733,7 +731,7 @@ namespace bailian
                     }
 
                     nCouponTimes++;
-                    Thread.Sleep(2000);
+                    Thread.Sleep(1000);
                 }            
             
             }
@@ -746,6 +744,7 @@ namespace bailian
         public static string strURL = @"";
         public static string strSkuid = @"";
         public static string strSkuid2 = @"";
+        public static string strActTime = @"";
         public static DateTime dtStartTime;
         public static DateTime dtEndTime;
         public static List<Player> listPlayer = new List<Player>();
@@ -753,39 +752,6 @@ namespace bailian
         public static void Init()
         {
             Http.InitCnn();
-
-/*
-            string strPic = System.Environment.CurrentDirectory + @"\" + @"pic.bmp";
-            string ret = Http.Cnn(strPic);
-            int n = 1;
-            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
-            ret = Http.Cnn(strPic);
-            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
-            ret = Http.Cnn(strPic);
-            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
-            ret = Http.Cnn(strPic);
-            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
-            ret = Http.Cnn(strPic);
-            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
-            ret = Http.Cnn(strPic);
-            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
-            ret = Http.Cnn(strPic);
-            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
-            ret = Http.Cnn(strPic);
-            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
-            ret = Http.Cnn(strPic);
-            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
-            ret = Http.Cnn(strPic);
-            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
-            ret = Http.Cnn(strPic);
-            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
-            ret = Http.Cnn(strPic);
-            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
-            ret = Http.Cnn(strPic);
-            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
-            ret = Http.Cnn(strPic);
-            Console.WriteLine(string.Format("{0}:{1}", n++, ret));
-*/
             string szConfigFileName = System.Environment.CurrentDirectory + @"\" + @"config.txt";
             string szAccountFileName = System.Environment.CurrentDirectory + @"\" + @"account.csv";
 
@@ -795,6 +761,7 @@ namespace bailian
             dtEndTime = DateTime.Parse((string)joInfo["EndTime"]);
             strSkuid = (string)joInfo["skuid"];
             strSkuid2 = (string)joInfo["skuid2"];
+            strActTime = (string)joInfo["actTime"];
             strURL = (string)joInfo["URL"];
             if ((string)joInfo["SetProxy"] == @"0")
                 bSetProxy = false;
