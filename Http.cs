@@ -257,6 +257,7 @@ namespace bailian
                             myRequestState.request.Method = "POST";
                             myRequestState.headers = myRequestState.request.Headers;
                             myRequestState.headers.Add("Origin", "http://killcoupon.bl.com");
+                            myRequestState.request.Referer = string.Format("http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime={0}&skuID={1}",AllPlayers.strActTime, AllPlayers.strSkuid);
                             myRequestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
                             myRequestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
                             myRequestState.request.ContentType = "application/x-www-form-urlencoded";
@@ -420,6 +421,7 @@ namespace bailian
                             myRequestState.request.Method = "POST";
                             myRequestState.headers = myRequestState.request.Headers;
                             myRequestState.headers.Add("Origin", "http://killcoupon.bl.com");
+                            myRequestState.request.Referer = string.Format("http://killcoupon.bl.com/seckill-web/seckillDetail/detail.html?actTime={0}&skuID={1}", AllPlayers.strActTime, AllPlayers.strSkuid2);
                             myRequestState.headers.Add("Accept-Language", "zh-Hans-CN,zh-Hans;q=0.5");
                             myRequestState.request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299";
                             myRequestState.request.ContentType = "application/x-www-form-urlencoded";
@@ -643,7 +645,7 @@ namespace bailian
                 }
 
                 nCouponTimes++;
-                Thread.Sleep(1000);
+                Thread.Sleep(AllPlayers.nInterval);
             }
 
 
@@ -731,7 +733,7 @@ namespace bailian
                     }
 
                     nCouponTimes++;
-                    Thread.Sleep(1000);
+                    Thread.Sleep(AllPlayers.nInterval);
                 }            
             
             }
@@ -745,6 +747,7 @@ namespace bailian
         public static string strSkuid = @"";
         public static string strSkuid2 = @"";
         public static string strActTime = @"";
+        public static int nInterval = 1000;
         public static DateTime dtStartTime;
         public static DateTime dtEndTime;
         public static List<Player> listPlayer = new List<Player>();
@@ -762,6 +765,7 @@ namespace bailian
             strSkuid = (string)joInfo["skuid"];
             strSkuid2 = (string)joInfo["skuid2"];
             strActTime = (string)joInfo["actTime"];
+            nInterval = (int)joInfo["interval"];
             strURL = (string)joInfo["URL"];
             if ((string)joInfo["SetProxy"] == @"0")
                 bSetProxy = false;
